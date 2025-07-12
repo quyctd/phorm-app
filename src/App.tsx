@@ -1,12 +1,10 @@
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
 import { Toaster } from "sonner";
 import { GameTracker } from "./GameTracker";
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-6 max-w-md min-h-screen">
+    <div className="min-h-screen bg-gray-50 safe-area-padding">
+      <main className="max-w-md min-h-screen mx-auto">
         <Content />
       </main>
       <Toaster
@@ -14,9 +12,13 @@ export default function App() {
         toastOptions={{
           duration: 3000,
           style: {
-            background: 'hsl(var(--background))',
-            color: 'hsl(var(--foreground))',
-            border: '1px solid hsl(var(--border))',
+            background: 'white',
+            color: '#1f2937',
+            border: '1px solid #e5e7eb',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
+            fontSize: '16px',
+            fontWeight: '500',
           },
         }}
       />

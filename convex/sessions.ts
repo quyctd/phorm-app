@@ -45,7 +45,7 @@ export const getActive = query({
 });
 
 export const create = mutation({
-  args: { 
+  args: {
     name: v.string(),
     playerIds: v.array(v.id("players"))
   },
@@ -55,17 +55,29 @@ export const create = mutation({
       .query("sessions")
       .withIndex("by_active", (q) => q.eq("isActive", true))
       .first();
-    
+
     if (activeSession) {
       await ctx.db.patch(activeSession._id, {
         isActive: false,
         endedAt: Date.now(),
       });
     }
-    
+
+    // Get player names for historical preservation
+    const players = await Promise.all(
+      args.playerIds.map((id) => ctx.db.get(id))
+    );
+    const playerNames: Record<string, string> = {};
+    for (const player of players) {
+      if (player) {
+        playerNames[player._id] = player.name;
+      }
+    }
+
     return await ctx.db.insert("sessions", {
       name: args.name.trim(),
       playerIds: args.playerIds,
+      playerNames,
       isActive: true,
     });
   },
@@ -99,13 +111,26 @@ export const getResults = query({
       .order("asc")
       .collect();
 
-    // Get all players for this session
+    // Get all players for this session, preserving historical data
     const players = await Promise.all(
-      session.playerIds.map((id) => ctx.db.get(id))
-    );
-    const validPlayers = players.filter((p): p is NonNullable<typeof p> => p !== null);
+      session.playerIds.map(async (id) => {
+        const player = await ctx.db.get(id);
+        if (player) {
+          return player;
+        }
 
-    // Calculate totals for each player
+        // Player was deleted - use stored historical name
+        const historicalName = session.playerNames?.[id] || `Deleted Player (${id.slice(-4)})`;
+        return {
+          _id: id,
+          name: historicalName,
+          _creationTime: 0, // Placeholder
+          isDeleted: true, // Mark as deleted for UI handling
+        };
+      })
+    );
+
+    // Calculate totals for each player (including deleted ones)
     const totals: Record<string, number> = {};
     for (const playerId of session.playerIds) {
       totals[playerId] = 0;
@@ -119,8 +144,8 @@ export const getResults = query({
       }
     }
 
-    // Create final results sorted by points (lowest first)
-    const results = validPlayers
+    // Create final results sorted by points (lowest first) - include ALL players
+    const results = players
       .map((player) => ({
         player,
         total: totals[player._id] || 0,
@@ -130,7 +155,7 @@ export const getResults = query({
     return {
       session: {
         ...session,
-        players: validPlayers,
+        players: players,
       },
       games,
       results,

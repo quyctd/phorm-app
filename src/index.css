@@ -1,3 +1,6 @@
+/* Import Montserrat font */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,8 +8,9 @@
 @layer base {
   :root {
     --color-light: #ffffff;
-    --color-dark: #171717;
+    --color-dark: #1d1d1f;
 
+    /* Apple-inspired color palette */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -26,7 +30,16 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
+    --radius: 1rem;
+    
+    /* Apple-style spacing system */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    --spacing-3xl: 4rem;
   }
 
   .dark {
@@ -52,67 +65,112 @@
   }
 }
 
-.accent-text {
-  @apply text-slate-600;
-}
-
+/* Modern typography with Montserrat */
 body {
   font-family:
-    "Inter Variable",
-    ui-sans-serif,
-    system-ui,
+    "Montserrat",
     -apple-system,
     BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
+    "SF Pro Display",
+    "SF Pro Text",
     "Helvetica Neue",
     Arial,
-    "Noto Sans",
-    sans-serif,
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    "Noto Color Emoji";
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   color: var(--color-dark);
-  background: var(--color-light);
+  background: #f5f5f7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
 }
 
-/* Mobile-first responsive improvements */
+/* Typography system */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+/* Ensure minimum 16px text */
+p, span, div, button, input, label {
+  font-size: 16px;
+}
+
+small, .text-sm {
+  font-size: 14px;
+}
+
+/* Mobile-first responsive design */
 @media (max-width: 640px) {
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
   }
+  
+  body {
+    font-size: 17px; /* Slightly larger on mobile for better readability */
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
 }
 
 /* Touch-friendly interactions */
 @media (hover: none) and (pointer: coarse) {
-  button, [role="button"] {
+  button, [role="button"], input, select, textarea {
     min-height: 44px;
     min-width: 44px;
   }
 }
 
-/* Smooth transitions and animations */
+/* Apple-style smooth transitions */
 * {
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Card hover effects */
+/* Card hover effects - Apple style */
 .card-hover {
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 /* Button press feedback */
 button:active, [role="button"]:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 /* Loading states */
@@ -121,7 +179,7 @@ button:active, [role="button"]:active {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.6;
   }
 }
 
@@ -133,7 +191,7 @@ button:active, [role="button"]:active {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -142,15 +200,159 @@ button:active, [role="button"]:active {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* only use this to update the style of the auth input fields. use a different class for all other input fields */
+/* Slide in animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Apple-style form elements */
+.app-input {
+  @apply w-full px-4 py-3 text-base rounded-lg bg-white border border-gray-200 
+         focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none 
+         transition-all placeholder:text-gray-400;
+}
+
+.app-button {
+  @apply px-6 py-3 text-base font-medium rounded-lg transition-all 
+         active:scale-95;
+}
+
+.app-button-primary {
+  @apply app-button bg-blue-500 text-white hover:bg-blue-600 
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.app-button-secondary {
+  @apply app-button bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+/* Modern card design */
+.app-card {
+  @apply bg-white rounded-lg border border-gray-100 
+         overflow-hidden transition-all;
+}
+
+.app-card-hover {
+  @apply app-card hover:-translate-y-1 cursor-pointer;
+}
+
+/* Avatar styles */
+.app-avatar {
+  @apply w-10 h-10 rounded-full flex items-center justify-center 
+         text-white font-medium text-sm;
+}
+
+.app-avatar-lg {
+  @apply w-12 h-12 rounded-full flex items-center justify-center 
+         text-white font-semibold text-base;
+}
+
+/* Badge styles */
+.app-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.app-badge-primary {
+  @apply app-badge bg-blue-100 text-blue-700;
+}
+
+.app-badge-success {
+  @apply app-badge bg-green-100 text-green-700;
+}
+
+.app-badge-warning {
+  @apply app-badge bg-yellow-100 text-yellow-700;
+}
+
+.app-badge-error {
+  @apply app-badge bg-red-100 text-red-700;
+}
+
+/* Safe area handling for mobile */
+.safe-area-padding {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Responsive typography */
+.text-hero {
+  @apply text-3xl font-bold tracking-tight;
+}
+
+.text-title {
+  @apply text-xl font-semibold;
+}
+
+.text-subtitle {
+  @apply text-lg font-medium;
+}
+
+.text-body {
+  @apply text-base;
+}
+
+.text-caption {
+  @apply text-sm text-gray-600;
+}
+
+/* Glassmorphism effect */
+.glass-effect {
+  @apply backdrop-blur-lg bg-white/90 border border-white/20;
+}
+
+/* Modern gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Focus states */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+/* Only use these for auth components - deprecated in favor of app-* classes */
 .auth-input-field {
-  @apply w-full px-4 py-3 rounded-container bg-white border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow shadow-sm hover:shadow;
+  @apply app-input;
 }
 
-/* only use this to update the style of the auth buttons. use the button class for all other buttons */
 .auth-button {
-  @apply w-full px-4 py-3 rounded bg-primary text-white font-semibold hover:bg-primary-hover transition-colors shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply app-button-primary w-full;
 }

@@ -10,6 +10,8 @@ const applicationTables = {
   sessions: defineTable({
     name: v.string(),
     playerIds: v.array(v.id("players")),
+    // Store player names at session creation time for historical preservation
+    playerNames: v.optional(v.record(v.id("players"), v.string())),
     isActive: v.boolean(),
     endedAt: v.optional(v.number()),
   }).index("by_active", ["isActive"]),

@@ -3,12 +3,11 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
+import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Badge } from "./components/ui/badge";
-import { Separator } from "./components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,15 +19,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./components/ui/alert-dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "./components/ui/sheet";
-import { ArrowLeft, Trophy, Plus, Trash2, Target, History, StopCircle, Users, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
+import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
+import { ArrowLeft, Trophy, Plus, Target, Stop, Users, Play, PauseIcon } from "@phosphor-icons/react";
 
 interface GameSessionProps {
   onBack: () => void;
@@ -46,51 +38,18 @@ export function GameSession({ onBack }: GameSessionProps) {
   ) || {};
 
   const addGame = useMutation(api.games.addGame);
-  const updateGame = useMutation(api.games.updateGame);
   const removeGame = useMutation(api.games.removeGame);
   const endSession = useMutation(api.sessions.end);
 
   const [newGamePoints, setNewGamePoints] = useState<Record<string, string>>({});
   const [autoCalculate, setAutoCalculate] = useState(true);
-  const [excludedPlayerId, setExcludedPlayerId] = useState<string>("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set());
 
-
-  if (!activeSession) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-xl font-semibold">Game Session</h1>
-        </div>
-
-        <Card className="border-dashed">
-          <CardContent className="text-center p-8 space-y-4">
-            <div className="p-4 bg-muted rounded-full w-fit mx-auto">
-              <Target className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg">No Active Session</h3>
-              <p className="text-muted-foreground">
-                Start a new session to begin tracking points
-              </p>
-            </div>
-            <Button onClick={onBack} className="w-full">
-              Start New Session
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const allPlayers = useMemo(() =>
-    activeSession.players.filter((p): p is NonNullable<typeof p> => p !== null),
-    [activeSession.players]
+    activeSession ? activeSession.players.filter((p): p is NonNullable<typeof p> => p !== null) : [],
+    [activeSession]
   );
 
   // Initialize selected players only once when component mounts
@@ -123,9 +82,64 @@ export function GameSession({ onBack }: GameSessionProps) {
         setSelectedPlayerIds(allPlayers.map(p => p._id));
       }
 
-      setIsInitialized(true);
+      setIsInitialized(true      );
     }
   }, [isInitialized, allPlayers, activeSession]);
+
+  if (!activeSession) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        {/* Modern Header - No Session */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 p-6 shadow-sm border border-gray-100">
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-500/5 to-slate-500/5" />
+          <div className="relative flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onBack} 
+              className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all hover:scale-105"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-700" />
+            </Button>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center">
+                  <Target className="h-4 w-4 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Game Session</h1>
+              </div>
+              <p className="text-gray-600 text-base font-medium">
+                No active session found
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="px-3 py-1 rounded-full bg-white/60 backdrop-blur-sm">
+                <span className="text-sm font-medium text-gray-700">Inactive</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Card className="app-card border-2 border-dashed border-gray-200 bg-gray-50">
+          <CardContent className="text-center p-8 space-y-4">
+            <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto">
+              <Target className="h-8 w-8 text-gray-500" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-gray-900 text-xl">No Active Session</h3>
+              <p className="text-gray-600 text-base">
+                Start a new session to begin tracking points
+              </p>
+            </div>
+            <Button onClick={onBack} className="w-full app-button-secondary h-12 text-base font-medium">
+              <Play className="h-5 w-5 mr-2" />
+              Start New Session
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const selectedPlayers = allPlayers.filter(player => selectedPlayerIds.includes(player._id));
 
@@ -140,24 +154,13 @@ export function GameSession({ onBack }: GameSessionProps) {
     return { initials, color: colors[colorIndex] };
   };
 
-  // Toggle player expansion in leaderboard
-  const togglePlayerExpansion = (playerId: string) => {
-    setExpandedPlayers(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(playerId)) {
-        newSet.delete(playerId);
-      } else {
-        newSet.add(playerId);
-      }
-      return newSet;
-    });
-  };
+
 
   // Get player's game history
   const getPlayerGameHistory = (playerId: string) => {
     return games.map(game => ({
       gameNumber: game.gameNumber,
-      points: game.points[playerId] || 0,
+      points: game.points[playerId as Id<"players">] || 0,
       gameId: game._id,
       autoCalculated: game.autoCalculated
     })).filter(game => game.points !== 0 || Object.keys(games.find(g => g._id === game.gameId)?.points || {}).includes(playerId));
@@ -249,57 +252,32 @@ export function GameSession({ onBack }: GameSessionProps) {
         pointsKeys: Object.keys(points),
         pointsLength: Object.keys(points).length,
         selectedPlayersLength: selectedPlayers.length,
-        selectedPlayers: selectedPlayers.map(p => p.name),
         points
       });
-      toast.error("Something went wrong with point calculation");
+      toast.error("Points validation failed. Please check your inputs.");
       return;
     }
 
-    console.log("Adding game with points:", points);
-
     try {
-      console.log("About to add game with:", {
-        sessionId: activeSession._id,
-        points,
-        autoCalculated: autoCalculate,
-        selectedPlayers: selectedPlayers.map(p => ({ id: p._id, name: p.name }))
-      });
-
-      const result = await addGame({
+      await addGame({
         sessionId: activeSession._id,
         points,
         autoCalculated: autoCalculate,
       });
 
-      console.log("Game added successfully, result:", result);
-
-      // Reset form state
+      // Clear the form
       setNewGamePoints({});
-
-      // Keep the same players selected for the next game
-      // (selectedPlayerIds stays the same)
-
-      toast.success("Game added successfully");
+      toast.success("Game added successfully!");
     } catch (error) {
       console.error("Error adding game:", error);
-      // Log the full error details for debugging
-      console.error("Error details:", {
-        error,
-        points,
-        selectedPlayers: selectedPlayers.map(p => ({ id: p._id, name: p.name })),
-        autoCalculate
-      });
-      toast.error(`Failed to add game: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error("Failed to add game. Please try again.");
     }
   };
-
-
 
   const handleRemoveGame = async (gameId: Id<"games">) => {
     try {
       await removeGame({ gameId });
-      toast.success("Game removed");
+      toast.success("Game removed successfully!");
     } catch (error) {
       toast.error("Failed to remove game");
     }
@@ -310,13 +288,8 @@ export function GameSession({ onBack }: GameSessionProps) {
 
     try {
       await endSession({ sessionId: activeSession._id });
-
-      // Clean up localStorage for this session
-      const storageKey = `selectedPlayers_${activeSession._id}`;
-      localStorage.removeItem(storageKey);
-
-      toast.success("Session ended");
-      onBack(); // Navigate back to home
+      toast.success("Session ended successfully!");
+      onBack();
     } catch (error) {
       toast.error("Failed to end session");
     }
@@ -331,248 +304,146 @@ export function GameSession({ onBack }: GameSessionProps) {
     .sort((a, b) => a.total - b.total);
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-semibold">{activeSession.name}</h1>
-            <p className="text-xs text-muted-foreground">
-              Game {games.length + 1} • {selectedPlayers.length}/{allPlayers.length} players
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Trophy className="h-4 w-4" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Header */}
+      <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
+        <div className="relative px-6 py-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={onBack}
+                className="w-10 h-10 rounded-xl hover:bg-white/50 transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-700" />
               </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md">
-              <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
-                  Leaderboard & History
-                </SheetTitle>
-                <SheetDescription>
-                  Current standings and game-by-game breakdown
-                </SheetDescription>
-              </SheetHeader>
-              <div className="mt-6 space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto">
-                {finalResults.map(({ player, total }, index) => {
-                  const avatar = getPlayerAvatar(player.name);
-                  const isExpanded = expandedPlayers.has(player._id);
-                  const playerHistory = getPlayerGameHistory(player._id);
-
-                  return (
-                    <div key={player._id} className="space-y-2">
-                      {/* Player Summary Row */}
-                      <div
-                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                          index === 0 && total > 0 ? "bg-destructive/10 border-destructive/20" : "bg-muted/20 hover:bg-muted/30"
-                        }`}
-                        onClick={() => togglePlayerExpansion(player._id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            togglePlayerExpansion(player._id);
-                          }
-                        }}
-                        tabIndex={0}
-                        role="button"
-                        aria-expanded={expandedPlayers.has(player._id)}
-                        aria-label={`Toggle details for ${player.name}`}
-                      >
-                        <span className="text-sm font-bold text-muted-foreground w-6">#{index + 1}</span>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs ${avatar.color}`}>
-                          {avatar.initials}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">{player.name}</span>
-                            {index === 0 && total > 0 && (
-                              <Badge variant="destructive" className="text-xs px-1 py-0">
-                                Losing
-                              </Badge>
-                            )}
-                          </div>
-                          {playerHistory.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              {playerHistory.length} game{playerHistory.length !== 1 ? 's' : ''} played
-                            </p>
-                          )}
-                        </div>
-                        <span className={`text-lg font-bold ${
-                          total < 0 ? "text-green-600" : total > 0 ? "text-destructive" : "text-muted-foreground"
-                        }`}>
-                          {total > 0 ? "+" : ""}{total}
-                        </span>
-                        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${
-                          isExpanded ? "rotate-90" : ""
-                        }`} />
-                      </div>
-
-                      {/* Expanded Game History */}
-                      {isExpanded && playerHistory.length > 0 && (
-                        <div className="ml-6 space-y-1 pb-2">
-                          <div className="flex items-center gap-2 mb-2">
-                            <History className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs font-medium text-muted-foreground">Game History</span>
-                          </div>
-                          {playerHistory.map((gameData) => (
-                            <div
-                              key={gameData.gameId}
-                              className="flex items-center justify-between p-2 bg-muted/30 rounded border text-xs"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">Game {gameData.gameNumber}</span>
-                                {gameData.autoCalculated && (
-                                  <Badge variant="secondary" className="text-xs px-1 py-0">
-                                    Auto
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`font-bold ${
-                                  gameData.points < 0 ? "text-green-600" :
-                                  gameData.points > 0 ? "text-destructive" : "text-muted-foreground"
-                                }`}>
-                                  {gameData.points > 0 ? "+" : ""}{gameData.points}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveGame(gameData.gameId);
-                                  }}
-                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* No games played message */}
-                      {isExpanded && playerHistory.length === 0 && (
-                        <div className="ml-6 p-2 text-xs text-muted-foreground italic">
-                          No games played yet
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="flex items-center gap-3">
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">{activeSession.name}</h1>
+                  <p className="text-sm text-gray-600">Game Session</p>
+                </div>
               </div>
-            </SheetContent>
-          </Sheet>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-destructive">
-                <StopCircle className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>End Session?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will end "{activeSession.name}". All data will be saved.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleEndSession}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  End Session
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                Game {games.length + 1}
+              </div>
+
+              <PlayerHistoryDrawer
+                trigger={
+                  <Button variant="outline" size="icon" className="w-10 h-10 rounded-xl border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                    <Trophy className="h-5 w-5 text-gray-600" />
+                  </Button>
+                }
+                title="Leaderboard & History"
+                description="Current standings and game-by-game breakdown"
+                results={finalResults}
+                getPlayerGameHistory={getPlayerGameHistory}
+                onRemoveGame={(gameId: Id<"games">) => void handleRemoveGame(gameId)}
+                showRemoveButtons={true}
+              />
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="icon" className="w-10 h-10 rounded-xl border-gray-200 hover:border-red-300 hover:bg-red-50 transition-colors text-red-500">
+                    <PauseIcon className="h-5 w-5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>End Session?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will end "{activeSession.name}". All data will be saved.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => void handleEndSession()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      End Session
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Always Visible Player Selection with Avatars */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span className="font-medium text-sm">Select Players</span>
-            <Badge variant="secondary" className="text-xs">
+      {/* Main Content */}
+      <div className="px-6 pb-8">
+        {/* Player Selection Section */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 bg-gradient-to-br from-slate-400 via-gray-500 to-slate-600 rounded-lg flex items-center justify-center">
+              <Users className="h-4 w-4 text-white" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900">Select Players</h2>
+            <Badge className="text-xs">
               {selectedPlayers.length}/{allPlayers.length}
             </Badge>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0">
+          <div className="bg-white rounded-2xl p-4 border border-gray-200">
           <div className="grid grid-cols-3 gap-3">
             {allPlayers.map((player) => {
               const avatar = getPlayerAvatar(player.name);
               const isSelected = selectedPlayerIds.includes(player._id);
               return (
-                <div
+                <button
                   key={player._id}
-                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                  type="button"
+                  className={`flex flex-col items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
                     isSelected
-                      ? "bg-primary/10 border-primary/30 scale-105"
-                      : "hover:bg-muted/50 hover:scale-102"
+                      ? "bg-blue-50 border-blue-300 scale-105"
+                      : "hover:bg-gray-50 hover:scale-102 border-gray-200"
                   }`}
                   onClick={() => togglePlayerSelection(player._id)}
                 >
                   <div className={`relative w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color} ${
-                    isSelected ? "ring-2 ring-primary ring-offset-2" : ""
+                    isSelected ? "ring-2 ring-blue-500 ring-offset-2" : ""
                   }`}>
                     {avatar.initials}
-                    {isSelected && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                        <div className="w-2 h-2 bg-white rounded-full" />
-                      </div>
-                    )}
                   </div>
                   <span className={`font-medium text-xs text-center leading-tight ${
-                    isSelected ? "text-primary" : "text-muted-foreground"
+                    isSelected ? "text-blue-600" : "text-gray-600"
                   }`}>
                     {player.name}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Main Point Entry - Prominent */}
-      <Card className="border-primary/20 shadow-lg">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Target className="h-5 w-5 text-primary" />
-              Game {games.length + 1} Points
-            </CardTitle>
+        {/* Point Entry Section */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 mt-4">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Auto-calc</span>
+              <div className="w-8 h-8 bg-gradient-to-br from-green-400 via-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                <Target className="h-4 w-4 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Game {games.length + 1} Points</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-600">Auto-calc</span>
               <input
                 type="checkbox"
                 checked={autoCalculate}
                 onChange={(e) => setAutoCalculate(e.target.checked)}
-                className="rounded border-input"
+                className="rounded border-gray-300"
               />
             </div>
           </div>
           {autoCalculate && (
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-gray-600 mb-4">
               💡 Leave one player empty to auto-calculate
             </p>
           )}
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddGame} className="space-y-4">
+          <form onSubmit={(e) => void handleAddGame(e)} className="space-y-4">
             {/* Points input grid - Large and prominent */}
             <div className="grid gap-4">
               {selectedPlayers.map((player) => (
@@ -597,15 +468,18 @@ export function GameSession({ onBack }: GameSessionProps) {
               ))}
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 hover:from-green-500 hover:via-green-600 hover:to-emerald-600 text-white border-0 transition-all duration-200"
+              size="lg"
+            >
               <Plus className="h-5 w-5 mr-2" />
               Add Game {games.length + 1}
             </Button>
           </form>
-        </CardContent>
-      </Card>
-
-
+        </div>
+      </div>
+    </div>
     </div>
   );
 }

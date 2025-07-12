@@ -26,7 +26,23 @@ export const remove = mutation({
     if (!player) {
       throw new Error("Player not found");
     }
-    
+
+    // Check if player is part of any sessions
+    const sessionsWithPlayer = await ctx.db
+      .query("sessions")
+      .collect();
+
+    const playerInSessions = sessionsWithPlayer.filter(session =>
+      session.playerIds.includes(args.playerId)
+    );
+
+    if (playerInSessions.length > 0) {
+      const sessionNames = playerInSessions.map(s => s.name).join(", ");
+      throw new Error(
+        `Cannot delete player "${player.name}" because they are part of the following sessions: ${sessionNames}. Historical game data must be preserved.`
+      );
+    }
+
     await ctx.db.delete(args.playerId);
   },
 });
