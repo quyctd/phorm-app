@@ -7,6 +7,13 @@ import { PlayerManager } from "./PlayerManager";
 import { SessionManager } from "./SessionManager";
 import { GameSession } from "./GameSession";
 
+// Skeleton component for loading states
+function Skeleton({ className }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+  );
+}
+
 type AppState = "home" | "players" | "sessions" | "game";
 type SessionView = "history" | "new-session";
 
@@ -15,6 +22,10 @@ export function GameTracker() {
   const [sessionView, setSessionView] = useState<SessionView>("history");
   const activeSession = useQuery(api.sessions.getActive);
   const players = useQuery(api.players.list) || [];
+
+  // Loading states
+  const isLoadingSession = activeSession === undefined;
+  const isLoadingPlayers = players === undefined;
 
   const handleStartNewSession = () => {
     setSessionView("new-session");
@@ -62,7 +73,12 @@ export function GameTracker() {
                 <p className="text-sm text-gray-600">Game Score Tracker</p>
               </div>
             </div>
-            {players.length >= 2 && (
+            {isLoadingPlayers ? (
+              <div className="text-right space-y-1">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            ) : players.length >= 2 && (
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{players.length} Players</p>
                 <p className="text-xs text-gray-500">
@@ -73,7 +89,17 @@ export function GameTracker() {
           </div>
 
           {/* Status Banner */}
-          {activeSession ? (
+          {isLoadingSession || isLoadingPlayers ? (
+            <div className="bg-gray-100 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+                <Skeleton className="h-9 w-20" />
+              </div>
+            </div>
+          ) : activeSession ? (
             <div className="bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 rounded-xl p-4 text-white">
               <div className="flex items-center justify-between">
                 <div>
@@ -105,7 +131,24 @@ export function GameTracker() {
       {/* Main Content */}
       <div className="px-6 pb-8">
         {/* Quick Actions Grid */}
-        {!activeSession && players.length >= 2 && (
+        {isLoadingSession || isLoadingPlayers ? (
+          <div className="mb-8">
+            <Skeleton className="h-6 w-32 mb-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Skeleton Action Cards */}
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <Skeleton className="w-12 h-12 rounded-xl mb-4" />
+                <Skeleton className="h-6 w-24 mb-2" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+              <div className="bg-white rounded-2xl p-6 border border-gray-200">
+                <Skeleton className="w-12 h-12 rounded-xl mb-4" />
+                <Skeleton className="h-6 w-20 mb-2" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            </div>
+          </div>
+        ) : !activeSession && players.length >= 2 && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -147,7 +190,23 @@ export function GameTracker() {
         )}
 
         {/* Players Section */}
-        {players.length >= 2 && (
+        {isLoadingPlayers ? (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-10 h-10 rounded-xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : players.length >= 2 && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Players</h2>
@@ -178,7 +237,16 @@ export function GameTracker() {
         )}
 
         {/* Getting Started - First Time Setup */}
-        {players.length === 0 && (
+        {isLoadingPlayers ? (
+          <div className="text-center">
+            <div className="bg-white rounded-2xl p-8 border border-gray-200">
+              <Skeleton className="w-16 h-16 rounded-2xl mx-auto mb-6" />
+              <Skeleton className="h-7 w-48 mx-auto mb-2" />
+              <Skeleton className="h-5 w-64 mx-auto mb-6" />
+              <Skeleton className="h-12 w-48 mx-auto rounded-xl" />
+            </div>
+          </div>
+        ) : players.length === 0 ? (
           <div className="text-center">
             <div className="bg-white rounded-2xl p-8 border border-gray-200">
               <div className="w-16 h-16 bg-gradient-to-br from-amber-400 via-orange-500 to-red-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -197,10 +265,7 @@ export function GameTracker() {
               </Button>
             </div>
           </div>
-        )}
-
-        {/* Need More Players */}
-        {players.length === 1 && (
+        ) : players.length === 1 ? (
           <div className="text-center">
             <div className="bg-gradient-to-br from-amber-100/60 to-orange-100/60 rounded-2xl p-6 border border-amber-300">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Almost Ready!</h3>
@@ -216,7 +281,7 @@ export function GameTracker() {
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
