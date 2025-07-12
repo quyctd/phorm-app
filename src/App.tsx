@@ -5,22 +5,25 @@ import { GameTracker } from "./GameTracker";
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
-        <h2 className="text-xl font-semibold text-primary">Game Points Tracker</h2>
-      </header>
-      <main className="flex-1 p-4">
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-6 max-w-md min-h-screen">
         <Content />
       </main>
-      <Toaster />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: 'hsl(var(--background))',
+            color: 'hsl(var(--foreground))',
+            border: '1px solid hsl(var(--border))',
+          },
+        }}
+      />
     </div>
   );
 }
 
 function Content() {
-  return (
-    <div className="max-w-6xl mx-auto">
-      <GameTracker />
-    </div>
-  );
+  return <GameTracker />;
 }

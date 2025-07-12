@@ -78,10 +78,63 @@ export const end = mutation({
     if (!session) {
       throw new Error("Session not found");
     }
-    
+
     await ctx.db.patch(args.sessionId, {
       isActive: false,
       endedAt: Date.now(),
     });
+  },
+});
+
+export const getResults = query({
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) return null;
+
+    // Get all games for this session
+    const games = await ctx.db
+      .query("games")
+      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+      .order("asc")
+      .collect();
+
+    // Get all players for this session
+    const players = await Promise.all(
+      session.playerIds.map((id) => ctx.db.get(id))
+    );
+    const validPlayers = players.filter((p): p is NonNullable<typeof p> => p !== null);
+
+    // Calculate totals for each player
+    const totals: Record<string, number> = {};
+    for (const playerId of session.playerIds) {
+      totals[playerId] = 0;
+    }
+
+    for (const game of games) {
+      for (const [playerId, points] of Object.entries(game.points)) {
+        if (totals[playerId] !== undefined) {
+          totals[playerId] += points;
+        }
+      }
+    }
+
+    // Create final results sorted by points (lowest first)
+    const results = validPlayers
+      .map((player) => ({
+        player,
+        total: totals[player._id] || 0,
+      }))
+      .sort((a, b) => a.total - b.total);
+
+    return {
+      session: {
+        ...session,
+        players: validPlayers,
+      },
+      games,
+      results,
+      totalGames: games.length,
+    };
   },
 });

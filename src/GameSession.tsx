@@ -1,9 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+import { Label } from "./components/ui/label";
+import { Badge } from "./components/ui/badge";
+import { Separator } from "./components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./components/ui/sheet";
+import { ArrowLeft, Trophy, Plus, Trash2, Target, History, StopCircle, Users, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
 
-export function GameSession() {
+interface GameSessionProps {
+  onBack: () => void;
+}
+
+export function GameSession({ onBack }: GameSessionProps) {
   const activeSession = useQuery(api.sessions.getActive);
   const games = useQuery(
     api.games.listBySession,
@@ -17,155 +48,282 @@ export function GameSession() {
   const addGame = useMutation(api.games.addGame);
   const updateGame = useMutation(api.games.updateGame);
   const removeGame = useMutation(api.games.removeGame);
+  const endSession = useMutation(api.sessions.end);
 
   const [newGamePoints, setNewGamePoints] = useState<Record<string, string>>({});
   const [autoCalculate, setAutoCalculate] = useState(true);
   const [excludedPlayerId, setExcludedPlayerId] = useState<string>("");
-  const [editingGameId, setEditingGameId] = useState<string | null>(null);
-  const [editGamePoints, setEditGamePoints] = useState<Record<string, string>>({});
-  const [editAutoCalculate, setEditAutoCalculate] = useState(true);
-  const [editExcludedPlayerId, setEditExcludedPlayerId] = useState<string>("");
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set());
+
 
   if (!activeSession) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">No Active Session</h2>
-        <p className="text-gray-600 mb-6">Start a new session to begin tracking points</p>
-        <p className="text-sm text-gray-500">Go to the Sessions tab to create a new session</p>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-xl font-semibold">Game Session</h1>
+        </div>
+
+        <Card className="border-dashed">
+          <CardContent className="text-center p-8 space-y-4">
+            <div className="p-4 bg-muted rounded-full w-fit mx-auto">
+              <Target className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">No Active Session</h3>
+              <p className="text-muted-foreground">
+                Start a new session to begin tracking points
+              </p>
+            </div>
+            <Button onClick={onBack} className="w-full">
+              Start New Session
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const players = activeSession.players.filter((p): p is NonNullable<typeof p> => p !== null);
+  const allPlayers = useMemo(() =>
+    activeSession.players.filter((p): p is NonNullable<typeof p> => p !== null),
+    [activeSession.players]
+  );
+
+  // Initialize selected players only once when component mounts
+  useEffect(() => {
+    if (!isInitialized && allPlayers.length > 0 && activeSession) {
+      // Try to load previously selected players from localStorage
+      const storageKey = `selectedPlayers_${activeSession._id}`;
+      const savedSelection = localStorage.getItem(storageKey);
+
+      if (savedSelection) {
+        try {
+          const parsedSelection = JSON.parse(savedSelection);
+          // Validate that saved players still exist in current session
+          const validPlayerIds = parsedSelection.filter((id: string) =>
+            allPlayers.some(p => p._id === id)
+          );
+
+          if (validPlayerIds.length >= 2) {
+            setSelectedPlayerIds(validPlayerIds);
+          } else {
+            // If saved selection is invalid, fall back to all players
+            setSelectedPlayerIds(allPlayers.map(p => p._id));
+          }
+        } catch {
+          // If parsing fails, fall back to all players
+          setSelectedPlayerIds(allPlayers.map(p => p._id));
+        }
+      } else {
+        // No saved selection, start with all players
+        setSelectedPlayerIds(allPlayers.map(p => p._id));
+      }
+
+      setIsInitialized(true);
+    }
+  }, [isInitialized, allPlayers, activeSession]);
+
+  const selectedPlayers = allPlayers.filter(player => selectedPlayerIds.includes(player._id));
+
+  // Generate avatar initials and colors
+  const getPlayerAvatar = (name: string) => {
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const colors = [
+      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
+      'bg-indigo-500', 'bg-yellow-500', 'bg-red-500', 'bg-teal-500'
+    ];
+    const colorIndex = name.length % colors.length;
+    return { initials, color: colors[colorIndex] };
+  };
+
+  // Toggle player expansion in leaderboard
+  const togglePlayerExpansion = (playerId: string) => {
+    setExpandedPlayers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(playerId)) {
+        newSet.delete(playerId);
+      } else {
+        newSet.add(playerId);
+      }
+      return newSet;
+    });
+  };
+
+  // Get player's game history
+  const getPlayerGameHistory = (playerId: string) => {
+    return games.map(game => ({
+      gameNumber: game.gameNumber,
+      points: game.points[playerId] || 0,
+      gameId: game._id,
+      autoCalculated: game.autoCalculated
+    })).filter(game => game.points !== 0 || Object.keys(games.find(g => g._id === game.gameId)?.points || {}).includes(playerId));
+  };
+
+
+
+  const togglePlayerSelection = (playerId: string) => {
+    setSelectedPlayerIds(prev => {
+      let newSelection: string[];
+      if (prev.includes(playerId)) {
+        // Don't allow deselecting if it would leave less than 2 players
+        if (prev.length <= 2) {
+          toast.error("At least 2 players are required for a game");
+          return prev;
+        }
+        newSelection = prev.filter(id => id !== playerId);
+      } else {
+        newSelection = [...prev, playerId];
+      }
+
+      // Save to localStorage whenever selection changes
+      if (activeSession) {
+        const storageKey = `selectedPlayers_${activeSession._id}`;
+        localStorage.setItem(storageKey, JSON.stringify(newSelection));
+      }
+
+      return newSelection;
+    });
+  };
 
   const handleAddGame = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const points: Record<string, number> = {};
-    let totalEntered = 0;
-    let enteredCount = 0;
 
-    // Process entered points
-    players.forEach((player) => {
-      const pointStr = newGamePoints[player._id] || "";
-      if (pointStr.trim() !== "") {
-        const point = parseFloat(pointStr);
-        if (!isNaN(point)) {
-          points[player._id] = point;
-          totalEntered += point;
-          enteredCount++;
-        }
-      }
-    });
-
-    // Auto-calculate if enabled and one player is excluded
-    if (autoCalculate && excludedPlayerId && enteredCount === players.length - 1) {
-      points[excludedPlayerId] = -totalEntered;
-    }
-
-    // Validate we have points for all players
-    if (Object.keys(points).length !== players.length) {
-      toast.error("Please enter points for all players or enable auto-calculation");
+    if (selectedPlayers.length < 2) {
+      toast.error("Please select at least 2 players for the game");
       return;
     }
 
+    const points: Record<string, number> = {};
+    let totalEntered = 0;
+    let enteredCount = 0;
+    const playersWithoutPoints: string[] = [];
+
+    // Process entered points for selected players
+    for (const player of selectedPlayers) {
+      const pointStr = newGamePoints[player._id] || "";
+
+      if (pointStr.trim() !== "") {
+        const point = Number.parseFloat(pointStr);
+        if (!Number.isNaN(point)) {
+          points[player._id] = point;
+          totalEntered += point;
+          enteredCount++;
+        } else {
+          toast.error(`Invalid number entered for ${player.name}: "${pointStr}"`);
+          return;
+        }
+      } else {
+        playersWithoutPoints.push(player._id);
+      }
+    }
+
+    // Handle auto-calculation
+    if (autoCalculate) {
+      if (playersWithoutPoints.length === 1) {
+        // Perfect! Auto-calculate the one missing player
+        const autoCalcPlayerId = playersWithoutPoints[0];
+        points[autoCalcPlayerId] = -totalEntered;
+        enteredCount++;
+      } else if (playersWithoutPoints.length === 0) {
+        toast.error("When auto-calculate is enabled, leave one player's points empty to auto-calculate");
+        return;
+      } else {
+        toast.error(`When auto-calculate is enabled, enter points for exactly ${selectedPlayers.length - 1} players (leave 1 empty)`);
+        return;
+      }
+    } else {
+      // Manual mode - need all players
+      if (enteredCount !== selectedPlayers.length) {
+        toast.error("Please enter points for all selected players or enable auto-calculation");
+        return;
+      }
+    }
+
+    // Final validation
+    if (Object.keys(points).length !== selectedPlayers.length) {
+      console.error("Validation failed:", {
+        pointsKeys: Object.keys(points),
+        pointsLength: Object.keys(points).length,
+        selectedPlayersLength: selectedPlayers.length,
+        selectedPlayers: selectedPlayers.map(p => p.name),
+        points
+      });
+      toast.error("Something went wrong with point calculation");
+      return;
+    }
+
+    console.log("Adding game with points:", points);
+
     try {
-      await addGame({
+      console.log("About to add game with:", {
         sessionId: activeSession._id,
         points,
-        autoCalculated: autoCalculate && excludedPlayerId !== "",
+        autoCalculated: autoCalculate,
+        selectedPlayers: selectedPlayers.map(p => ({ id: p._id, name: p.name }))
       });
+
+      const result = await addGame({
+        sessionId: activeSession._id,
+        points,
+        autoCalculated: autoCalculate,
+      });
+
+      console.log("Game added successfully, result:", result);
+
+      // Reset form state
       setNewGamePoints({});
-      setExcludedPlayerId("");
+
+      // Keep the same players selected for the next game
+      // (selectedPlayerIds stays the same)
+
       toast.success("Game added successfully");
     } catch (error) {
-      toast.error("Failed to add game");
-    }
-  };
-
-  const handleEditGame = (game: any) => {
-    setEditingGameId(game._id);
-    const editPoints: Record<string, string> = {};
-    players.forEach((player) => {
-      editPoints[player._id] = (game.points[player._id] || 0).toString();
-    });
-    setEditGamePoints(editPoints);
-    setEditAutoCalculate(game.autoCalculated);
-    
-    // Find excluded player if auto-calculated
-    if (game.autoCalculated) {
-      const totalOthers = Object.entries(game.points)
-        .filter(([playerId, points]) => (points as number) >= 0)
-        .reduce((sum, [, points]) => sum + (points as number), 0);
-      const excludedPlayer = Object.entries(game.points)
-        .find(([, points]) => (points as number) === -totalOthers);
-      setEditExcludedPlayerId(excludedPlayer ? excludedPlayer[0] : "");
-    } else {
-      setEditExcludedPlayerId("");
-    }
-  };
-
-  const handleUpdateGame = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingGameId) return;
-
-    const points: Record<string, number> = {};
-    let totalEntered = 0;
-    let enteredCount = 0;
-
-    // Process entered points
-    players.forEach((player) => {
-      const pointStr = editGamePoints[player._id] || "";
-      if (pointStr.trim() !== "") {
-        const point = parseFloat(pointStr);
-        if (!isNaN(point)) {
-          points[player._id] = point;
-          totalEntered += point;
-          enteredCount++;
-        }
-      }
-    });
-
-    // Auto-calculate if enabled and one player is excluded
-    if (editAutoCalculate && editExcludedPlayerId && enteredCount === players.length - 1) {
-      points[editExcludedPlayerId] = -totalEntered;
-    }
-
-    // Validate we have points for all players
-    if (Object.keys(points).length !== players.length) {
-      toast.error("Please enter points for all players or enable auto-calculation");
-      return;
-    }
-
-    try {
-      await updateGame({
-        gameId: editingGameId as any,
+      console.error("Error adding game:", error);
+      // Log the full error details for debugging
+      console.error("Error details:", {
+        error,
         points,
-        autoCalculated: editAutoCalculate && editExcludedPlayerId !== "",
+        selectedPlayers: selectedPlayers.map(p => ({ id: p._id, name: p.name })),
+        autoCalculate
       });
-      setEditingGameId(null);
-      setEditGamePoints({});
-      setEditExcludedPlayerId("");
-      toast.success("Game updated successfully");
-    } catch (error) {
-      toast.error("Failed to update game");
+      toast.error(`Failed to add game: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  const handleRemoveGame = async (gameId: string) => {
-    const confirmed = window.confirm("Are you sure you want to remove this game?");
-    if (!confirmed) return;
 
+
+  const handleRemoveGame = async (gameId: Id<"games">) => {
     try {
-      await removeGame({ gameId: gameId as any });
+      await removeGame({ gameId });
       toast.success("Game removed");
     } catch (error) {
       toast.error("Failed to remove game");
     }
   };
 
-  // Calculate final results sorted by points (lowest first)
-  const finalResults = players
+  const handleEndSession = async () => {
+    if (!activeSession) return;
+
+    try {
+      await endSession({ sessionId: activeSession._id });
+
+      // Clean up localStorage for this session
+      const storageKey = `selectedPlayers_${activeSession._id}`;
+      localStorage.removeItem(storageKey);
+
+      toast.success("Session ended");
+      onBack(); // Navigate back to home
+    } catch (error) {
+      toast.error("Failed to end session");
+    }
+  };
+
+  // Calculate final results sorted by points (lowest first) - for all players in session
+  const finalResults = allPlayers
     .map((player) => ({
       player,
       total: totals[player._id] || 0,
@@ -173,299 +331,281 @@ export function GameSession() {
     .sort((a, b) => a.total - b.total);
 
   return (
-    <div className="space-y-6">
-      {/* Session Header */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h2 className="text-2xl font-bold text-blue-900 mb-2">
-          {activeSession.name}
-        </h2>
-        <p className="text-blue-700">
-          Game {games.length + 1} • {players.length} players
-        </p>
-      </div>
-
-      {/* Current Totals */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {finalResults.map(({ player, total }) => (
-          <div
-            key={player._id}
-            className="bg-white border-2 border-gray-200 rounded-lg p-4 text-center"
-          >
-            <h3 className="font-semibold text-gray-900 mb-1">{player.name}</h3>
-            <p className={`text-2xl font-bold ${
-              total < 0 ? "text-green-600" : total > 0 ? "text-red-600" : "text-gray-600"
-            }`}>
-              {total > 0 ? "+" : ""}{total}
+    <div className="space-y-4 animate-fade-in">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-lg font-semibold">{activeSession.name}</h1>
+            <p className="text-xs text-muted-foreground">
+              Game {games.length + 1} • {selectedPlayers.length}/{allPlayers.length} players
             </p>
           </div>
-        ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Trophy className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5" />
+                  Leaderboard & History
+                </SheetTitle>
+                <SheetDescription>
+                  Current standings and game-by-game breakdown
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto">
+                {finalResults.map(({ player, total }, index) => {
+                  const avatar = getPlayerAvatar(player.name);
+                  const isExpanded = expandedPlayers.has(player._id);
+                  const playerHistory = getPlayerGameHistory(player._id);
+
+                  return (
+                    <div key={player._id} className="space-y-2">
+                      {/* Player Summary Row */}
+                      <div
+                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          index === 0 && total > 0 ? "bg-destructive/10 border-destructive/20" : "bg-muted/20 hover:bg-muted/30"
+                        }`}
+                        onClick={() => togglePlayerExpansion(player._id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            togglePlayerExpansion(player._id);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-expanded={expandedPlayers.has(player._id)}
+                        aria-label={`Toggle details for ${player.name}`}
+                      >
+                        <span className="text-sm font-bold text-muted-foreground w-6">#{index + 1}</span>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs ${avatar.color}`}>
+                          {avatar.initials}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">{player.name}</span>
+                            {index === 0 && total > 0 && (
+                              <Badge variant="destructive" className="text-xs px-1 py-0">
+                                Losing
+                              </Badge>
+                            )}
+                          </div>
+                          {playerHistory.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              {playerHistory.length} game{playerHistory.length !== 1 ? 's' : ''} played
+                            </p>
+                          )}
+                        </div>
+                        <span className={`text-lg font-bold ${
+                          total < 0 ? "text-green-600" : total > 0 ? "text-destructive" : "text-muted-foreground"
+                        }`}>
+                          {total > 0 ? "+" : ""}{total}
+                        </span>
+                        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${
+                          isExpanded ? "rotate-90" : ""
+                        }`} />
+                      </div>
+
+                      {/* Expanded Game History */}
+                      {isExpanded && playerHistory.length > 0 && (
+                        <div className="ml-6 space-y-1 pb-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <History className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs font-medium text-muted-foreground">Game History</span>
+                          </div>
+                          {playerHistory.map((gameData) => (
+                            <div
+                              key={gameData.gameId}
+                              className="flex items-center justify-between p-2 bg-muted/30 rounded border text-xs"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Game {gameData.gameNumber}</span>
+                                {gameData.autoCalculated && (
+                                  <Badge variant="secondary" className="text-xs px-1 py-0">
+                                    Auto
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`font-bold ${
+                                  gameData.points < 0 ? "text-green-600" :
+                                  gameData.points > 0 ? "text-destructive" : "text-muted-foreground"
+                                }`}>
+                                  {gameData.points > 0 ? "+" : ""}{gameData.points}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveGame(gameData.gameId);
+                                  }}
+                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* No games played message */}
+                      {isExpanded && playerHistory.length === 0 && (
+                        <div className="ml-6 p-2 text-xs text-muted-foreground italic">
+                          No games played yet
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-destructive">
+                <StopCircle className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>End Session?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will end "{activeSession.name}". All data will be saved.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleEndSession}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  End Session
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
-      {/* Add New Game */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Game Points</h3>
-        
-        <form onSubmit={handleAddGame} className="space-y-4">
-          {/* Auto-calculate toggle */}
-          <div className="flex items-center space-x-3">
-            <label className="flex items-center space-x-2">
+      {/* Always Visible Player Selection with Avatars */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="font-medium text-sm">Select Players</span>
+            <Badge variant="secondary" className="text-xs">
+              {selectedPlayers.length}/{allPlayers.length}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-3 gap-3">
+            {allPlayers.map((player) => {
+              const avatar = getPlayerAvatar(player.name);
+              const isSelected = selectedPlayerIds.includes(player._id);
+              return (
+                <div
+                  key={player._id}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-primary/10 border-primary/30 scale-105"
+                      : "hover:bg-muted/50 hover:scale-102"
+                  }`}
+                  onClick={() => togglePlayerSelection(player._id)}
+                >
+                  <div className={`relative w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color} ${
+                    isSelected ? "ring-2 ring-primary ring-offset-2" : ""
+                  }`}>
+                    {avatar.initials}
+                    {isSelected && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                    )}
+                  </div>
+                  <span className={`font-medium text-xs text-center leading-tight ${
+                    isSelected ? "text-primary" : "text-muted-foreground"
+                  }`}>
+                    {player.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Point Entry - Prominent */}
+      <Card className="border-primary/20 shadow-lg">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Target className="h-5 w-5 text-primary" />
+              Game {games.length + 1} Points
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Auto-calc</span>
               <input
                 type="checkbox"
                 checked={autoCalculate}
-                onChange={(e) => {
-                  setAutoCalculate(e.target.checked);
-                  if (!e.target.checked) {
-                    setExcludedPlayerId("");
-                  }
-                }}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
+                onChange={(e) => setAutoCalculate(e.target.checked)}
+                className="rounded border-input"
               />
-              <span className="text-sm font-medium text-gray-700">
-                Auto-calculate one player's points
-              </span>
-            </label>
-          </div>
-
-          {/* Excluded player selection */}
-          {autoCalculate && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Player to auto-calculate:
-              </label>
-              <select
-                value={excludedPlayerId}
-                onChange={(e) => setExcludedPlayerId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                required={autoCalculate}
-              >
-                <option value="">Select player...</option>
-                {players.map((player) => (
-                  <option key={player._id} value={player._id}>
-                    {player.name}
-                  </option>
-                ))}
-              </select>
             </div>
+          </div>
+          {autoCalculate && (
+            <p className="text-xs text-muted-foreground mt-2">
+              💡 Leave one player empty to auto-calculate
+            </p>
           )}
-
-          {/* Points input */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {players.map((player) => (
-              <div key={player._id}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {player.name}
-                  {autoCalculate && excludedPlayerId === player._id && (
-                    <span className="text-xs text-blue-600 ml-1">(auto)</span>
-                  )}
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  value={newGamePoints[player._id] || ""}
-                  onChange={(e) =>
-                    setNewGamePoints(prev => ({
-                      ...prev,
-                      [player._id]: e.target.value
-                    }))
-                  }
-                  disabled={autoCalculate && excludedPlayerId === player._id}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:bg-gray-100"
-                  placeholder="0"
-                />
-              </div>
-            ))}
-          </div>
-
-          <button
-            type="submit"
-            className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover font-medium"
-          >
-            Add Game
-          </button>
-        </form>
-      </div>
-
-      {/* Game History */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Game History ({games.length})
-        </h3>
-        
-        {games.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No games played yet</p>
-            <p className="text-sm">Add your first game above</p>
-          </div>
-        ) : (
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {games.slice().reverse().map((game) => (
-              <div key={game._id} className="bg-white border border-gray-200 rounded-lg p-4">
-                {editingGameId === game._id ? (
-                  <form onSubmit={handleUpdateGame} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-gray-900">Edit Game {game.gameNumber}</h4>
-                      <button
-                        type="button"
-                        onClick={() => setEditingGameId(null)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={editAutoCalculate}
-                          onChange={(e) => {
-                            setEditAutoCalculate(e.target.checked);
-                            if (!e.target.checked) {
-                              setEditExcludedPlayerId("");
-                            }
-                          }}
-                          className="rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <span className="text-sm font-medium text-gray-700">
-                          Auto-calculate
-                        </span>
-                      </label>
-                    </div>
-
-                    {editAutoCalculate && (
-                      <select
-                        value={editExcludedPlayerId}
-                        onChange={(e) => setEditExcludedPlayerId(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                        required={editAutoCalculate}
-                      >
-                        <option value="">Select player to auto-calculate...</option>
-                        {players.map((player) => (
-                          <option key={player._id} value={player._id}>
-                            {player.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {players.map((player) => (
-                        <div key={player._id}>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {player.name}
-                          </label>
-                          <input
-                            type="number"
-                            step="any"
-                            value={editGamePoints[player._id] || ""}
-                            onChange={(e) =>
-                              setEditGamePoints(prev => ({
-                                ...prev,
-                                [player._id]: e.target.value
-                              }))
-                            }
-                            disabled={editAutoCalculate && editExcludedPlayerId === player._id}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:bg-gray-100"
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover font-medium"
-                      >
-                        Update
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingGameId(null)}
-                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-gray-900">
-                        Game {game.gameNumber}
-                        {game.autoCalculated && (
-                          <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                            Auto-calculated
-                          </span>
-                        )}
-                      </h4>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEditGame(game)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleRemoveGame(game._id)}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {players.map((player) => (
-                        <div key={player._id} className="text-center">
-                          <div className="text-sm text-gray-600">{player.name}</div>
-                          <div className={`font-semibold ${
-                            (game.points[player._id] || 0) < 0 ? "text-green-600" : 
-                            (game.points[player._id] || 0) > 0 ? "text-red-600" : "text-gray-600"
-                          }`}>
-                            {(game.points[player._id] || 0) > 0 ? "+" : ""}{game.points[player._id] || 0}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleAddGame} className="space-y-4">
+            {/* Points input grid - Large and prominent */}
+            <div className="grid gap-4">
+              {selectedPlayers.map((player) => (
+                <div key={player._id} className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
+                  <div className="flex-1">
+                    <Label className="font-medium text-base">{player.name}</Label>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Final Results */}
-      {games.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-yellow-900 mb-4">Current Standings</h3>
-          <div className="space-y-2">
-            {finalResults.map((result, index) => (
-              <div
-                key={result.player._id}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  index === 0 ? "bg-red-100 border border-red-200" : "bg-white border border-gray-200"
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-lg font-bold text-gray-600">#{index + 1}</span>
-                  <span className="font-medium text-gray-900">{result.player.name}</span>
-                  {index === 0 && (
-                    <span className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full">
-                      Current Loser
-                    </span>
-                  )}
+                  <Input
+                    type="number"
+                    step="any"
+                    value={newGamePoints[player._id] || ""}
+                    onChange={(e) =>
+                      setNewGamePoints(prev => ({
+                        ...prev,
+                        [player._id]: e.target.value
+                      }))
+                    }
+                    className="w-24 text-center text-lg font-medium"
+                    placeholder={autoCalculate ? "auto" : "0"}
+                  />
                 </div>
-                <span className={`text-xl font-bold ${
-                  result.total < 0 ? "text-green-600" : 
-                  result.total > 0 ? "text-red-600" : "text-gray-600"
-                }`}>
-                  {result.total > 0 ? "+" : ""}{result.total}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+              ))}
+            </div>
+
+            <Button type="submit" className="w-full" size="lg">
+              <Plus className="h-5 w-5 mr-2" />
+              Add Game {games.length + 1}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+
     </div>
   );
 }
