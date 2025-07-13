@@ -5,9 +5,8 @@ import type { Id } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
-import { Label } from "./components/ui/label";
 import { Badge } from "./components/ui/badge";
+import { Label } from "./components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "./components/ui/alert-dialog";
 import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
-import { ArrowLeft, Trophy, Plus, Target, Stop, Users, Play, PauseIcon } from "@phosphor-icons/react";
+import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, Backspace, Check } from "@phosphor-icons/react";
 
 interface GameSessionProps {
   onBack: () => void;
@@ -46,9 +45,14 @@ export function GameSession({ onBack }: GameSessionProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Custom keypad state
+  const [activeInputPlayer, setActiveInputPlayer] = useState<string | null>(null);
+  const [keypadValue, setKeypadValue] = useState("");
+  const [isNegative, setIsNegative] = useState(true);
+
 
   const allPlayers = useMemo(() =>
-    activeSession ? activeSession.players.filter((p): p is NonNullable<typeof p> => p !== null) : [],
+    activeSession ? activeSession.players : [],
     [activeSession]
   );
 
@@ -64,22 +68,22 @@ export function GameSession({ onBack }: GameSessionProps) {
           const parsedSelection = JSON.parse(savedSelection);
           // Validate that saved players still exist in current session
           const validPlayerIds = parsedSelection.filter((id: string) =>
-            allPlayers.some(p => p._id === id)
+            allPlayers.some(p => p.id === id)
           );
 
           if (validPlayerIds.length >= 2) {
             setSelectedPlayerIds(validPlayerIds);
           } else {
             // If saved selection is invalid, fall back to all players
-            setSelectedPlayerIds(allPlayers.map(p => p._id));
+            setSelectedPlayerIds(allPlayers.map(p => p.id));
           }
         } catch {
           // If parsing fails, fall back to all players
-          setSelectedPlayerIds(allPlayers.map(p => p._id));
+          setSelectedPlayerIds(allPlayers.map(p => p.id));
         }
       } else {
         // No saved selection, start with all players
-        setSelectedPlayerIds(allPlayers.map(p => p._id));
+        setSelectedPlayerIds(allPlayers.map(p => p.id));
       }
 
       setIsInitialized(true      );
@@ -141,7 +145,7 @@ export function GameSession({ onBack }: GameSessionProps) {
     );
   }
 
-  const selectedPlayers = allPlayers.filter(player => selectedPlayerIds.includes(player._id));
+  const selectedPlayers = allPlayers.filter(player => selectedPlayerIds.includes(player.id));
 
   // Generate avatar initials and colors
   const getPlayerAvatar = (name: string) => {
@@ -160,7 +164,7 @@ export function GameSession({ onBack }: GameSessionProps) {
   const getPlayerGameHistory = (playerId: string) => {
     return games.map(game => ({
       gameNumber: game.gameNumber,
-      points: game.points[playerId as Id<"players">] || 0,
+      points: game.points[playerId] || 0,
       gameId: game._id,
       autoCalculated: game.autoCalculated
     })).filter(game => game.points !== 0 || Object.keys(games.find(g => g._id === game.gameId)?.points || {}).includes(playerId));
@@ -207,12 +211,12 @@ export function GameSession({ onBack }: GameSessionProps) {
 
     // Process entered points for selected players
     for (const player of selectedPlayers) {
-      const pointStr = newGamePoints[player._id] || "";
+      const pointStr = newGamePoints[player.id] || "";
 
       if (pointStr.trim() !== "") {
         const point = Number.parseFloat(pointStr);
         if (!Number.isNaN(point)) {
-          points[player._id] = point;
+          points[player.id] = point;
           totalEntered += point;
           enteredCount++;
         } else {
@@ -220,7 +224,7 @@ export function GameSession({ onBack }: GameSessionProps) {
           return;
         }
       } else {
-        playersWithoutPoints.push(player._id);
+        playersWithoutPoints.push(player.id);
       }
     }
 
@@ -299,9 +303,50 @@ export function GameSession({ onBack }: GameSessionProps) {
   const finalResults = allPlayers
     .map((player) => ({
       player,
-      total: totals[player._id] || 0,
+      total: totals[player.id] || 0,
     }))
     .sort((a, b) => a.total - b.total);
+
+  // Custom keypad functions
+  const openKeypad = (playerId: string) => {
+    setActiveInputPlayer(playerId);
+    const currentValue = newGamePoints[playerId] || "";
+    // Remove the minus sign for keypad value and track it separately
+    const cleanValue = currentValue.startsWith("-") ? currentValue.slice(1) : currentValue;
+    setKeypadValue(cleanValue);
+    setIsNegative(currentValue.startsWith("-"));
+  };
+
+  const closeKeypad = () => {
+    setActiveInputPlayer(null);
+    setKeypadValue("");
+    setIsNegative(false);
+  };
+
+  const handleKeypadNumber = (num: string) => {
+    setKeypadValue(prev => prev + num);
+  };
+
+  const handleKeypadBackspace = () => {
+    setKeypadValue(prev => prev.slice(0, -1));
+  };
+
+  const handleKeypadToggleSign = () => {
+    setIsNegative(prev => !prev);
+  };
+
+  const handleKeypadConfirm = () => {
+    if (activeInputPlayer) {
+      const finalValue = keypadValue === "" ? "" : (isNegative ? "-" : "") + keypadValue;
+      setNewGamePoints(prev => ({
+        ...prev,
+        [activeInputPlayer]: finalValue
+      }));
+    }
+    closeKeypad();
+  };
+
+  const displayValue = keypadValue === "" ? "0" : (isNegative ? "-" : "") + keypadValue;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -341,14 +386,14 @@ export function GameSession({ onBack }: GameSessionProps) {
                 description="Current standings and game-by-game breakdown"
                 results={finalResults}
                 getPlayerGameHistory={getPlayerGameHistory}
-                onRemoveGame={(gameId: Id<"games">) => void handleRemoveGame(gameId)}
+                onRemoveGame={(gameId) => void handleRemoveGame(gameId)}
                 showRemoveButtons={true}
               />
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="icon" className="w-10 h-10 rounded-xl border-gray-200 hover:border-red-300 hover:bg-red-50 transition-colors text-red-500">
-                    <PauseIcon className="h-5 w-5" />
+                    <Pause className="h-5 w-5" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -391,17 +436,17 @@ export function GameSession({ onBack }: GameSessionProps) {
           <div className="grid grid-cols-3 gap-3">
             {allPlayers.map((player) => {
               const avatar = getPlayerAvatar(player.name);
-              const isSelected = selectedPlayerIds.includes(player._id);
+              const isSelected = selectedPlayerIds.includes(player.id);
               return (
                 <button
-                  key={player._id}
+                  key={player.id}
                   type="button"
                   className={`flex flex-col items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
                     isSelected
                       ? "bg-blue-50 border-blue-300 scale-105"
                       : "hover:bg-gray-50 hover:scale-102 border-gray-200"
                   }`}
-                  onClick={() => togglePlayerSelection(player._id)}
+                  onClick={() => togglePlayerSelection(player.id)}
                 >
                   <div className={`relative w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color} ${
                     isSelected ? "ring-2 ring-blue-500 ring-offset-2" : ""
@@ -447,23 +492,17 @@ export function GameSession({ onBack }: GameSessionProps) {
             {/* Points input grid - Large and prominent */}
             <div className="grid gap-4">
               {selectedPlayers.map((player) => (
-                <div key={player._id} className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
+                <div key={player.id} className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
                   <div className="flex-1">
                     <Label className="font-medium text-base">{player.name}</Label>
                   </div>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={newGamePoints[player._id] || ""}
-                    onChange={(e) =>
-                      setNewGamePoints(prev => ({
-                        ...prev,
-                        [player._id]: e.target.value
-                      }))
-                    }
-                    className="w-24 text-center text-lg font-medium"
-                    placeholder={autoCalculate ? "auto" : "0"}
-                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => openKeypad(player.id)}
+                    className="w-24 h-12 text-center text-lg font-medium border-2 hover:border-blue-300 hover:bg-blue-50"
+                  >
+                    {newGamePoints[player.id] || (autoCalculate ? "auto" : "0")}
+                  </Button>
                 </div>
               ))}
             </div>
@@ -480,6 +519,101 @@ export function GameSession({ onBack }: GameSessionProps) {
         </div>
       </div>
     </div>
+
+    {/* Custom Keypad Modal */}
+    {activeInputPlayer && (
+      // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+      <div
+        className="fixed inset-0 bg-black/50 flex items-end justify-center z-50"
+        onClick={closeKeypad}
+      >
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+        <div
+          className="bg-white w-full max-w-sm rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Display */}
+          <div className="mb-6">
+            <div className="text-center mb-2">
+              <span className="text-sm text-gray-600">
+                {allPlayers.find(p => p.id === activeInputPlayer)?.name}
+              </span>
+            </div>
+            <div className="bg-gray-100 rounded-xl p-4 text-center">
+              <span className="text-3xl font-bold text-gray-900">
+                {displayValue}
+              </span>
+            </div>
+          </div>
+
+          {/* Keypad */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {/* Numbers 1-9 */}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+              <Button
+                key={num}
+                variant="outline"
+                size="lg"
+                onClick={() => handleKeypadNumber(num.toString())}
+                className="h-14 text-xl font-semibold hover:bg-blue-50 hover:border-blue-300"
+              >
+                {num}
+              </Button>
+            ))}
+          </div>
+
+          {/* Bottom row: +/-, 0, Backspace */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleKeypadToggleSign}
+              className={`h-14 text-lg font-semibold ${
+                isNegative
+                  ? "bg-red-50 border-red-300 text-red-600 hover:bg-red-100"
+                  : "bg-green-50 border-green-300 text-green-600 hover:bg-green-100"
+              }`}
+            >
+              {isNegative ? "−" : "+"}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => handleKeypadNumber("0")}
+              className="h-14 text-xl font-semibold hover:bg-blue-50 hover:border-blue-300"
+            >
+              0
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleKeypadBackspace}
+              className="h-14 hover:bg-gray-50 hover:border-gray-300"
+            >
+              <Backspace className="h-6 w-6" />
+            </Button>
+          </div>
+
+          {/* Action buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              onClick={closeKeypad}
+              className="h-12 text-base font-medium"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleKeypadConfirm}
+              className="h-12 text-base font-medium bg-green-500 hover:bg-green-600 text-white"
+            >
+              <Check className="h-5 w-5 mr-2" />
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }

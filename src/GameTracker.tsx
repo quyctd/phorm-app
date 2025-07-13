@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Button } from "./components/ui/button";
-import { Users, Plus, Trophy } from "@phosphor-icons/react";
-import { PlayerManager } from "./PlayerManager";
+import { Plus, Trophy } from "@phosphor-icons/react";
 import { SessionManager } from "./SessionManager";
 import { GameSession } from "./GameSession";
 
@@ -14,18 +13,16 @@ function Skeleton({ className }: { className?: string }) {
   );
 }
 
-type AppState = "home" | "players" | "sessions" | "game";
+type AppState = "home" | "sessions" | "game";
 type SessionView = "history" | "new-session";
 
 export function GameTracker() {
   const [currentState, setCurrentState] = useState<AppState>("home");
   const [sessionView, setSessionView] = useState<SessionView>("history");
   const activeSession = useQuery(api.sessions.getActive);
-  const players = useQuery(api.players.list) || [];
 
   // Loading states
   const isLoadingSession = activeSession === undefined;
-  const isLoadingPlayers = players === undefined;
 
   const handleStartNewSession = () => {
     setSessionView("new-session");
@@ -40,11 +37,6 @@ export function GameTracker() {
   // Show game session if we have an active session and user navigates to game
   if (currentState === "game") {
     return <GameSession onBack={() => setCurrentState("home")} />;
-  }
-
-  // Show player management
-  if (currentState === "players") {
-    return <PlayerManager onBack={() => setCurrentState("home")} />;
   }
 
   // Show session management
@@ -73,23 +65,21 @@ export function GameTracker() {
                 <p className="text-sm text-gray-600">Game Score Tracker</p>
               </div>
             </div>
-            {isLoadingPlayers ? (
+            {isLoadingSession ? (
               <div className="text-right space-y-1">
                 <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-3 w-20" />
               </div>
-            ) : players.length >= 2 && (
+            ) : activeSession && (
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{players.length} Players</p>
-                <p className="text-xs text-gray-500">
-                  {activeSession ? "Game Active" : "Ready to Play"}
-                </p>
+                <p className="text-sm font-medium text-gray-900">Active Session</p>
+                <p className="text-xs text-gray-500">Game in Progress</p>
               </div>
             )}
           </div>
 
           {/* Status Banner */}
-          {isLoadingSession || isLoadingPlayers ? (
+          {isLoadingSession ? (
             <div className="bg-gray-100 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
@@ -104,7 +94,7 @@ export function GameTracker() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold">{activeSession.name}</p>
-                  <p className="text-sm opacity-90">{activeSession.players.length} players • Game in progress</p>
+                  <p className="text-sm opacity-90">{activeSession.players?.length || 0} players • Game in progress</p>
                 </div>
                 <Button
                   onClick={() => setCurrentState("game")}
@@ -114,15 +104,10 @@ export function GameTracker() {
                 </Button>
               </div>
             </div>
-          ) : players.length >= 2 ? (
+          ) : (
             <div className="bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 rounded-xl p-4 text-white">
               <p className="font-semibold">Ready to start a new game!</p>
-              <p className="text-sm opacity-90">All players are set up and ready to go</p>
-            </div>
-          ) : (
-            <div className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-400 rounded-xl p-4 text-white">
-              <p className="font-semibold">Welcome to Phorm!</p>
-              <p className="text-sm opacity-90">Add players to get started with game tracking</p>
+              <p className="text-sm opacity-90">Create a session with your players</p>
             </div>
           )}
         </div>
@@ -131,10 +116,10 @@ export function GameTracker() {
       {/* Main Content */}
       <div className="px-6 pb-8">
         {/* Quick Actions Grid */}
-        {isLoadingSession || isLoadingPlayers ? (
+        {isLoadingSession ? (
           <div className="mb-8">
             <Skeleton className="h-6 w-32 mb-4" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {/* Skeleton Action Cards */}
               <div className="bg-white rounded-2xl p-6 border border-gray-200">
                 <Skeleton className="w-12 h-12 rounded-xl mb-4" />
@@ -148,33 +133,35 @@ export function GameTracker() {
               </div>
             </div>
           </div>
-        ) : !activeSession && players.length >= 2 && (
+        ) : (
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {/* Start New Session */}
-              <div
+              {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+              {!activeSession && (<div
                 onClick={handleStartNewSession}
                 className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-gray-200 hover:border-green-300 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-emerald-500/20 group-hover:from-green-400/30 group-hover:to-emerald-500/30 transition-all duration-200"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-emerald-500/20 group-hover:from-green-400/30 group-hover:to-emerald-500/30 transition-all duration-200" />
                 <div className="relative">
                   <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                     <Plus className="h-6 w-6 text-white" />
                   </div>
                   <h3 className="font-semibold text-gray-900 text-lg mb-2">New Game</h3>
                   <p className="text-gray-600 text-sm">
-                    Start a fresh session with {players.length} players
+                    Create a new game session with your players
                   </p>
                 </div>
-              </div>
+              </div>)}
 
               {/* View History */}
+              {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
               <div
                 onClick={handleViewSessionHistory}
                 className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-gray-200 hover:border-blue-300 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-500/20 group-hover:from-blue-400/30 group-hover:to-purple-500/30 transition-all duration-200"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-500/20 group-hover:from-blue-400/30 group-hover:to-purple-500/30 transition-all duration-200" />
                 <div className="relative">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
                     <Trophy className="h-6 w-6 text-white" />
@@ -188,100 +175,6 @@ export function GameTracker() {
             </div>
           </div>
         )}
-
-        {/* Players Section */}
-        {isLoadingPlayers ? (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-8 w-20" />
-            </div>
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-10 h-10 rounded-xl" />
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-32" />
-                  <Skeleton className="h-4 w-48" />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : players.length >= 2 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Players</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setCurrentState("players")}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              >
-                Add More
-              </Button>
-            </div>
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-slate-400 via-gray-500 to-slate-600 rounded-xl flex items-center justify-center">
-                  <Users className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{players.length} Players Ready</p>
-                  <p className="text-sm text-gray-600">
-                    {players.slice(0, 3).map(p => p.name).join(", ")}
-                    {players.length > 3 && ` +${players.length - 3} more`}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Getting Started - First Time Setup */}
-        {isLoadingPlayers ? (
-          <div className="text-center">
-            <div className="bg-white rounded-2xl p-8 border border-gray-200">
-              <Skeleton className="w-16 h-16 rounded-2xl mx-auto mb-6" />
-              <Skeleton className="h-7 w-48 mx-auto mb-2" />
-              <Skeleton className="h-5 w-64 mx-auto mb-6" />
-              <Skeleton className="h-12 w-48 mx-auto rounded-xl" />
-            </div>
-          </div>
-        ) : players.length === 0 ? (
-          <div className="text-center">
-            <div className="bg-white rounded-2xl p-8 border border-gray-200">
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 via-orange-500 to-red-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Users className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Welcome to Phorm!</h3>
-              <p className="text-gray-600 mb-6">
-                Add your players to get started with game tracking
-              </p>
-              <Button
-                onClick={() => setCurrentState("players")}
-                className="bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 hover:from-blue-500 hover:via-indigo-600 hover:to-purple-600 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200"
-              >
-                <Users className="h-5 w-5 mr-2" />
-                Add Your First Players
-              </Button>
-            </div>
-          </div>
-        ) : players.length === 1 ? (
-          <div className="text-center">
-            <div className="bg-gradient-to-br from-amber-100/60 to-orange-100/60 rounded-2xl p-6 border border-amber-300">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Almost Ready!</h3>
-              <p className="text-gray-600 mb-4">
-                Add one more player to start tracking games
-              </p>
-              <Button
-                onClick={() => setCurrentState("players")}
-                className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-400 hover:from-amber-500 hover:via-orange-600 hover:to-red-500 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Another Player
-              </Button>
-            </div>
-          </div>
-        ) : null}
       </div>
     </div>
   );

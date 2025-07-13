@@ -1,53 +1,34 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { generateShareToken, generatePlayerId } from "./utils";
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const sessions = await ctx.db
+    // Get all sessions (no auth required for now)
+    return await ctx.db
       .query("sessions")
       .order("desc")
       .collect();
-    
-    return await Promise.all(
-      sessions.map(async (session) => {
-        const players = await Promise.all(
-          session.playerIds.map((id) => ctx.db.get(id))
-        );
-        return {
-          ...session,
-          players: players.filter(Boolean),
-        };
-      })
-    );
   },
 });
 
 export const getActive = query({
   args: {},
   handler: async (ctx) => {
-    const session = await ctx.db
+    // Get any active session (no auth required for now)
+    return await ctx.db
       .query("sessions")
       .withIndex("by_active", (q) => q.eq("isActive", true))
       .first();
-    
-    if (!session) return null;
-    
-    const players = await Promise.all(
-      session.playerIds.map((id) => ctx.db.get(id))
-    );
-    
-    return {
-      ...session,
-      players: players.filter(Boolean),
-    };
   },
 });
 
 export const create = mutation({
   args: {
     name: v.string(),
-    playerIds: v.array(v.id("players"))
+    playerNames: v.array(v.string()),
+    isPublic: v.optional(v.boolean())
   },
   handler: async (ctx, args) => {
     // End any active session first
@@ -63,22 +44,20 @@ export const create = mutation({
       });
     }
 
-    // Get player names for historical preservation
-    const players = await Promise.all(
-      args.playerIds.map((id) => ctx.db.get(id))
-    );
-    const playerNames: Record<string, string> = {};
-    for (const player of players) {
-      if (player) {
-        playerNames[player._id] = player.name;
-      }
-    }
+    // Create players with unique IDs
+    const players = args.playerNames.map(name => ({
+      id: generatePlayerId(),
+      name: name.trim(),
+    }));
+
+    const shareToken = args.isPublic ? generateShareToken() : undefined;
 
     return await ctx.db.insert("sessions", {
       name: args.name.trim(),
-      playerIds: args.playerIds,
-      playerNames,
+      players,
       isActive: true,
+      isPublic: args.isPublic || false,
+      shareToken,
     });
   },
 });
@@ -111,29 +90,16 @@ export const getResults = query({
       .order("asc")
       .collect();
 
-    // Get all players for this session, preserving historical data
-    const players = await Promise.all(
-      session.playerIds.map(async (id) => {
-        const player = await ctx.db.get(id);
-        if (player) {
-          return player;
-        }
-
-        // Player was deleted - use stored historical name
-        const historicalName = session.playerNames?.[id] || `Deleted Player (${id.slice(-4)})`;
-        return {
-          _id: id,
-          name: historicalName,
-          _creationTime: 0, // Placeholder
-          isDeleted: true, // Mark as deleted for UI handling
-        };
-      })
-    );
-
-    // Calculate totals for each player (including deleted ones)
+    // Calculate totals for each player - handle both new and legacy formats
     const totals: Record<string, number> = {};
-    for (const playerId of session.playerIds) {
-      totals[playerId] = 0;
+    let players: Array<{ id: string; name: string; }> = [];
+
+    if (session.players) {
+      // New format: session-scoped players
+      players = session.players;
+      for (const player of session.players) {
+        totals[player.id] = 0;
+      }
     }
 
     for (const game of games) {
@@ -144,22 +110,28 @@ export const getResults = query({
       }
     }
 
-    // Create final results sorted by points (lowest first) - include ALL players
+    // Create final results sorted by points (lowest first)
     const results = players
       .map((player) => ({
         player,
-        total: totals[player._id] || 0,
+        total: totals[player.id] || 0,
       }))
       .sort((a, b) => a.total - b.total);
 
+    // Return session with normalized format
+    const normalizedSession = {
+      ...session,
+      players,
+      isPublic: session.isPublic || false,
+    };
+
     return {
-      session: {
-        ...session,
-        players: players,
-      },
+      session: normalizedSession,
       games,
       results,
       totalGames: games.length,
     };
   },
 });
+
+// Session sharing functionality will be added later when authentication is implemented

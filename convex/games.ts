@@ -6,7 +6,7 @@ export const listBySession = query({
   handler: async (ctx, args) => {
     const session = await ctx.db.get(args.sessionId);
     if (!session) return [];
-    
+
     return await ctx.db
       .query("games")
       .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
@@ -20,36 +20,38 @@ export const getTotals = query({
   handler: async (ctx, args) => {
     const session = await ctx.db.get(args.sessionId);
     if (!session) return {};
-    
+
     const games = await ctx.db
       .query("games")
       .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
       .collect();
-    
+
     const totals: Record<string, number> = {};
-    
+
     // Initialize totals for all players
-    session.playerIds.forEach((playerId) => {
-      totals[playerId] = 0;
-    });
-    
+    if (session.players) {
+      for (const player of session.players) {
+        totals[player.id] = 0;
+      }
+    }
+
     // Sum up points from all games
-    games.forEach((game) => {
-      Object.entries(game.points).forEach(([playerId, points]) => {
+    for (const game of games) {
+      for (const [playerId, points] of Object.entries(game.points)) {
         if (totals[playerId] !== undefined) {
           totals[playerId] += points;
         }
-      });
-    });
-    
+      }
+    }
+
     return totals;
   },
 });
 
 export const addGame = mutation({
-  args: { 
+  args: {
     sessionId: v.id("sessions"),
-    points: v.record(v.id("players"), v.number()),
+    points: v.record(v.string(), v.number()),
     autoCalculated: v.boolean()
   },
   handler: async (ctx, args) => {
@@ -57,16 +59,16 @@ export const addGame = mutation({
     if (!session) {
       throw new Error("Session not found");
     }
-    
+
     // Get the next game number
     const lastGame = await ctx.db
       .query("games")
       .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
       .order("desc")
       .first();
-    
+
     const gameNumber = lastGame ? lastGame.gameNumber + 1 : 1;
-    
+
     return await ctx.db.insert("games", {
       sessionId: args.sessionId,
       gameNumber,
@@ -77,9 +79,9 @@ export const addGame = mutation({
 });
 
 export const updateGame = mutation({
-  args: { 
+  args: {
     gameId: v.id("games"),
-    points: v.record(v.id("players"), v.number()),
+    points: v.record(v.string(), v.number()),
     autoCalculated: v.boolean()
   },
   handler: async (ctx, args) => {
@@ -87,7 +89,12 @@ export const updateGame = mutation({
     if (!game) {
       throw new Error("Game not found");
     }
-    
+
+    const session = await ctx.db.get(game.sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
     await ctx.db.patch(args.gameId, {
       points: args.points,
       autoCalculated: args.autoCalculated,
@@ -102,7 +109,12 @@ export const removeGame = mutation({
     if (!game) {
       throw new Error("Game not found");
     }
-    
+
+    const session = await ctx.db.get(game.sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
     await ctx.db.delete(args.gameId);
   },
 });

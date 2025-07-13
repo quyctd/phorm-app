@@ -13,9 +13,8 @@ import { Trophy, ClockCounterClockwise, CaretRight, Trash } from "@phosphor-icon
 import type { Id } from "../../convex/_generated/dataModel";
 
 interface Player {
-  _id: Id<"players">;
+  id: string;
   name: string;
-  isDeleted?: boolean;
 }
 
 interface GameData {
@@ -94,26 +93,26 @@ export function PlayerHistoryDrawer({
           {results.length > 0 ? (
             results.map(({ player, total }, index) => {
               const avatar = getPlayerAvatar(player.name);
-              const isExpanded = expandedPlayers.has(player._id);
-              const playerHistory = getPlayerGameHistory(player._id);
+              const isExpanded = expandedPlayers.has(player.id);
+              const playerHistory = getPlayerGameHistory(player.id);
 
               return (
-                <div key={player._id} className="space-y-2">
+                <div key={player.id} className="space-y-2">
                   {/* Player Summary Row */}
                   <div
                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                       index === 0 && total > 0 ? "bg-destructive/10 border-destructive/20" : "bg-muted/20 hover:bg-muted/30"
                     }`}
-                    onClick={() => togglePlayerExpansion(player._id)}
+                    onClick={() => togglePlayerExpansion(player.id)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        togglePlayerExpansion(player._id);
+                        togglePlayerExpansion(player.id);
                       }
                     }}
                     tabIndex={0}
                     role="button"
-                    aria-expanded={expandedPlayers.has(player._id)}
+                    aria-expanded={expandedPlayers.has(player.id)}
                     aria-label={`Toggle details for ${player.name}`}
                   >
                     <span className="text-sm font-bold text-muted-foreground w-6">#{index + 1}</span>
@@ -122,15 +121,10 @@ export function PlayerHistoryDrawer({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className={`font-semibold text-sm ${player.isDeleted ? 'text-gray-500 italic' : ''}`}>
+                        <span className={"font-semibold text-sm"}>
                           {player.name}
                         </span>
-                        {player.isDeleted && (
-                          <Badge variant="secondary" className="text-xs px-1 py-0">
-                            Deleted
-                          </Badge>
-                        )}
-                        {index === 0 && total > 0 && !player.isDeleted && (
+                        {index === 0 && total > 0 && (
                           <Badge variant="destructive" className="text-xs px-1 py-0">
                             Last
                           </Badge>

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import type { Id } from "../convex/_generated/dataModel";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
-import { ArrowLeft, Play, Plus, Trophy, Eye, ClockCounterClockwise, Check } from "@phosphor-icons/react";
+import { ArrowLeft, Play, Plus, Trophy, Eye, ClockCounterClockwise, X, UserPlus, Share } from "@phosphor-icons/react";
+import type { Id } from "../convex/_generated/dataModel";
 
 interface SessionManagerProps {
   onBack: () => void;
@@ -18,58 +18,61 @@ interface SessionManagerProps {
 
 export function SessionManager({ onBack, onNavigateToGame, initialView = "history" }: SessionManagerProps) {
   const [newSessionName, setNewSessionName] = useState("");
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState<Id<"players">[]>([]);
+  const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
   const [showNewSession, setShowNewSession] = useState(initialView === "new-session");
+  const [isPublic, setIsPublic] = useState(false);
 
-  const players = useQuery(api.players.list) || [];
   const sessions = useQuery(api.sessions.list) || [];
   const activeSession = useQuery(api.sessions.getActive);
 
   const createSession = useMutation(api.sessions.create);
 
-  // Generate avatar initials and colors
-  const getPlayerAvatar = (name: string) => {
-    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
-      'bg-indigo-500', 'bg-yellow-500', 'bg-red-500', 'bg-teal-500'
-    ];
-    const colorIndex = name.length % colors.length;
-    return { initials, color: colors[colorIndex] };
+  const addPlayerField = () => {
+    setPlayerNames([...playerNames, ""]);
+  };
+
+  const removePlayerField = (index: number) => {
+    if (playerNames.length > 2) {
+      setPlayerNames(playerNames.filter((_, i) => i !== index));
+    }
+  };
+
+  const updatePlayerName = (index: number, name: string) => {
+    const updated = [...playerNames];
+    updated[index] = name;
+    setPlayerNames(updated);
   };
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSessionName.trim()) return;
 
-    let playerIds = selectedPlayerIds;
+    // Filter out empty player names and validate
+    const validPlayerNames = playerNames.filter(name => name.trim());
 
-    // If no players selected, use all players
-    if (playerIds.length === 0) {
-      playerIds = players.map(p => p._id);
-    }
-
-    if (playerIds.length < 2) {
-      toast.error("Please select at least 2 players");
+    if (validPlayerNames.length < 2) {
+      toast.error("Please add at least 2 players");
       return;
     }
 
     try {
       await createSession({
         name: newSessionName.trim(),
-        playerIds,
+        playerNames: validPlayerNames,
+        isPublic,
       });
       setNewSessionName("");
-      setSelectedPlayerIds([]);
+      setPlayerNames(["", ""]);
+      setIsPublic(false);
       setShowNewSession(false);
       toast.success("Session started successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to create session");
     }
   };
 
   const handleQuickStart = () => {
-    setSelectedPlayerIds(players.map(p => p._id));
+    setPlayerNames(["Player 1", "Player 2"]);
     setNewSessionName(`Game ${new Date().toLocaleDateString()}`);
     setShowNewSession(true);
   };
@@ -109,7 +112,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold">{activeSession.name}</p>
-                  <p className="text-sm opacity-90">{activeSession.players.length} players • Game in progress</p>
+                  <p className="text-sm opacity-90">{activeSession.players?.length || 0} players • Game in progress</p>
                 </div>
                 {onNavigateToGame && (
                   <Button
@@ -130,12 +133,6 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
         {/* New Session Form */}
         {showNewSession && (
           <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-400 via-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                <Plus className="h-4 w-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">Create New Session</h2>
-            </div>
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <form onSubmit={(e) => void handleCreateSession(e)} className="space-y-6">
                 <div className="space-y-2">
@@ -154,49 +151,74 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                 </div>
 
                 <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-gray-700 font-medium">
+                      Players ({playerNames.filter(name => name.trim()).length} added)
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addPlayerField}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    >
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Add Player
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {playerNames.map((name, index) => (
+                      <div key={index.toString()} className="flex items-center gap-3">
+                        <Input
+                          type="text"
+                          value={name}
+                          onChange={(e) => updatePlayerName(index, e.target.value)}
+                          placeholder={`Player ${index + 1} name`}
+                          className="flex-1 border-gray-200 rounded-xl h-12"
+                        />
+                        {playerNames.length > 2 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => removePlayerField(index)}
+                            className="w-12 h-12 border-gray-200 hover:bg-red-50 hover:border-red-200"
+                          >
+                            <X className="h-4 w-4 text-gray-500" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
                   <Label className="text-gray-700 font-medium">
-                    Select Players ({selectedPlayerIds.length} selected)
+                    Session Settings
                   </Label>
-                  <div className="grid gap-3">
-                    {players.map((player) => {
-                      const avatar = getPlayerAvatar(player.name);
-                      return (
-                        <button
-                          key={player._id}
-                          type="button"
-                          className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
-                            selectedPlayerIds.includes(player._id)
-                              ? "bg-blue-50 border-blue-300"
-                              : "hover:bg-gray-50 border-gray-200"
-                          }`}
-                          onClick={() => {
-                            setSelectedPlayerIds(prev =>
-                              prev.includes(player._id)
-                                ? prev.filter(id => id !== player._id)
-                                : [...prev, player._id]
-                            );
-                          }}
-                        >
-                          <div className={`size-10 rounded-full flex items-center justify-center ${avatar.color}`}>
-                            <span className="text-white font-semibold text-sm">{avatar.initials}</span>
-                          </div>
-                          <div className="flex-1 text-left">
-                            <h3 className="font-semibold text-base text-gray-900">{player.name}</h3>
-                          </div>
-                          {selectedPlayerIds.includes(player._id) && (
-                            <div className="w-5 h-5 bg-blue-500 rounded flex items-center justify-center">
-                              <Check className="h-4 w-4 text-white" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200">
+                    <input
+                      type="checkbox"
+                      id="isPublic"
+                      checked={isPublic}
+                      onChange={(e) => setIsPublic(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <div className="flex-1">
+                      <label htmlFor="isPublic" className="font-medium text-gray-900 cursor-pointer">
+                        Allow sharing
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Generate a shareable link to allow others to manage the game points.
+                      </p>
+                    </div>
+                    <Share className="h-5 w-5 text-gray-400" />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={!newSessionName.trim() || selectedPlayerIds.length < 2}
+                  disabled={!newSessionName.trim() || playerNames.filter(name => name.trim()).length < 2}
                   className="w-full bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 hover:from-green-500 hover:via-green-600 hover:to-emerald-600 text-white border-0 transition-all duration-200 h-12 text-base font-medium"
                 >
                   <Plus className="h-5 w-5 mr-2" />
@@ -208,7 +230,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
         )}
 
         {/* Quick Start */}
-      {!activeSession && players.length >= 2 && !showNewSession && (
+      {!activeSession && !showNewSession && (
         <Card className="app-card border-0">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl flex items-center gap-3">
@@ -220,7 +242,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-gray-600 text-base">
-              Start a game with all {players.length} players
+              Start a game with 2 default players
             </p>
             <Button onClick={handleQuickStart} className="w-full app-button-primary h-12 text-base font-medium">
               <Play className="h-5 w-5 mr-2" />
@@ -263,16 +285,17 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
 interface SessionHistorySheetProps {
   session: {
-    _id: Id<"sessions">;
+    _id: string;
     name: string;
     _creationTime: number;
     isActive: boolean;
+    players?: Array<{ id: string; name: string; }>;
   };
 }
 function SessionHistorySheet({ session }: SessionHistorySheetProps) {
   const sessionResults = useQuery(
     api.sessions.getResults,
-    { sessionId: session._id }
+    { sessionId: session._id as Id<'sessions'> }
   );
 
   // Get player's game history
@@ -280,7 +303,7 @@ function SessionHistorySheet({ session }: SessionHistorySheetProps) {
     if (!sessionResults?.games) return [];
     return sessionResults.games.map(game => ({
       gameNumber: game.gameNumber,
-      points: game.points[playerId as Id<"players">] || 0,
+      points: game.points[playerId] || 0,
       gameId: game._id,
       autoCalculated: game.autoCalculated
     })).filter(game => game.points !== 0 || Object.keys(sessionResults.games.find(g => g._id === game.gameId)?.points || {}).includes(playerId));
