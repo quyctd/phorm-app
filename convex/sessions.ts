@@ -134,4 +134,38 @@ export const getResults = query({
   },
 });
 
+export const join = mutation({
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const session = await ctx.db.get(args.sessionId);
+    if (!session) {
+      throw new Error("Session not found");
+    }
+
+    if (!session.isActive) {
+      throw new Error("Session has ended");
+    }
+
+    // End any currently active session first
+    const activeSession = await ctx.db
+      .query("sessions")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .first();
+
+    if (activeSession && activeSession._id !== args.sessionId) {
+      await ctx.db.patch(activeSession._id, {
+        isActive: false,
+        endedAt: Date.now(),
+      });
+    }
+
+    // Make the joined session active (in case it wasn't)
+    await ctx.db.patch(args.sessionId, {
+      isActive: true,
+    });
+
+    return session;
+  },
+});
+
 // Session sharing functionality will be added later when authentication is implemented

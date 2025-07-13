@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 import { Button } from "./components/ui/button";
 import { Plus, Trophy } from "@phosphor-icons/react";
 import { SessionManager } from "./SessionManager";
 import { GameSession } from "./GameSession";
+import { toast } from "sonner";
 
 // Skeleton component for loading states
 function Skeleton({ className }: { className?: string }) {
@@ -20,9 +22,33 @@ export function GameTracker() {
   const [currentState, setCurrentState] = useState<AppState>("home");
   const [sessionView, setSessionView] = useState<SessionView>("history");
   const activeSession = useQuery(api.sessions.getActive);
+  const joinSession = useMutation(api.sessions.join);
 
   // Loading states
   const isLoadingSession = activeSession === undefined;
+
+  // Handle shared session links
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session');
+
+    if (sessionId && !activeSession && !isLoadingSession) {
+      // Try to join the shared session
+      joinSession({ sessionId: sessionId as Id<"sessions"> })
+        .then(() => {
+          toast.success("Joined shared session!");
+          setCurrentState("game");
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        })
+        .catch((error) => {
+          console.error("Failed to join session:", error);
+          toast.error("Failed to join session. It may have ended or doesn't exist.");
+          // Clean up URL even on error
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+    }
+  }, [activeSession, isLoadingSession, joinSession]);
 
   const handleStartNewSession = () => {
     setSessionView("new-session");

@@ -8,6 +8,13 @@ import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
 import { Label } from "./components/ui/label";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./components/ui/dropdown-menu";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -19,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "./components/ui/alert-dialog";
 import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
-import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, Backspace, Check } from "@phosphor-icons/react";
+import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, Backspace, Check, ShareNetwork, DotsThreeVertical } from "@phosphor-icons/react";
 
 interface GameSessionProps {
   onBack: () => void;
@@ -299,6 +306,34 @@ export function GameSession({ onBack }: GameSessionProps) {
     }
   };
 
+  const handleShare = async () => {
+    if (!activeSession) return;
+
+    const shareUrl = `${window.location.origin}?session=${activeSession._id}`;
+    const shareData = {
+      title: `Join "${activeSession.name}" Game Session`,
+      text: `Join my game session "${activeSession.name}" to track scores together!`,
+      url: shareUrl,
+    };
+
+    try {
+      // Check if Web Share API is available (mobile devices)
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        toast.success("Session shared successfully!");
+      } else {
+        // Fallback: Copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Session link copied to clipboard!");
+      }
+    } catch (error) {
+      // Final fallback: Show the URL in a toast
+      toast.info(`Share this link: ${shareUrl}`, {
+        duration: 10000,
+      });
+    }
+  };
+
   // Calculate final results sorted by points (lowest first) - for all players in session
   const finalResults = allPlayers
     .map((player) => ({
@@ -390,11 +425,35 @@ export function GameSession({ onBack }: GameSessionProps) {
                 showRemoveButtons={true}
               />
 
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="w-10 h-10 rounded-xl border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors">
+                    <DotsThreeVertical className="h-5 w-5 text-gray-600" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => void handleShare()} className="cursor-pointer">
+                    <ShareNetwork className="h-4 w-4 mr-2 text-green-600" />
+                    Share Session
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      // We'll trigger the alert dialog programmatically
+                      document.getElementById('end-session-trigger')?.click();
+                    }}
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                  >
+                    <Pause className="h-4 w-4 mr-2" />
+                    End Session
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Hidden AlertDialog trigger */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="icon" className="w-10 h-10 rounded-xl border-gray-200 hover:border-red-300 hover:bg-red-50 transition-colors text-red-500">
-                    <Pause className="h-5 w-5" />
-                  </Button>
+                  <button id="end-session-trigger" className="hidden" />
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -479,7 +538,15 @@ export function GameSession({ onBack }: GameSessionProps) {
                 type="checkbox"
                 checked={autoCalculate}
                 onChange={(e) => setAutoCalculate(e.target.checked)}
-                className="rounded border-gray-300"
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 focus:ring-offset-0"
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  minWidth: '16px',
+                  minHeight: '16px',
+                  maxWidth: '16px',
+                  maxHeight: '16px'
+                }}
               />
             </div>
           </div>
