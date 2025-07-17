@@ -6,6 +6,8 @@ import { Button } from "./components/ui/button";
 import { Plus, Trophy } from "@phosphor-icons/react";
 import { SessionManager } from "./SessionManager";
 import { GameSession } from "./GameSession";
+import { PullToRefresh } from "./components/PullToRefresh";
+import { useConvexRefresh } from "./hooks/useConvexRefresh";
 import { toast } from "sonner";
 
 // Skeleton component for loading states
@@ -23,6 +25,7 @@ export function GameTracker() {
   const [sessionView, setSessionView] = useState<SessionView>("history");
   const activeSession = useQuery(api.sessions.getActive);
   const joinSession = useMutation(api.sessions.join);
+  const { refreshData } = useConvexRefresh();
 
   // Loading states
   const isLoadingSession = activeSession === undefined;
@@ -76,7 +79,10 @@ export function GameTracker() {
 
   // Home screen - main dashboard
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <PullToRefresh
+      onRefresh={refreshData}
+      className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+    >
       {/* Header */}
       <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
@@ -202,6 +208,6 @@ export function GameTracker() {
           </div>
         )}
       </div>
-    </div>
+    </PullToRefresh>
   );
 }

@@ -7,6 +7,8 @@ import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
 import { Label } from "./components/ui/label";
+import { PullToRefresh } from "./components/PullToRefresh";
+import { useConvexRefresh } from "./hooks/useConvexRefresh";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +44,7 @@ export function GameSession({ onBack }: GameSessionProps) {
     api.games.getTotals,
     activeSession ? { sessionId: activeSession._id } : "skip"
   ) || {};
+  const { refreshData } = useConvexRefresh();
 
   const addGame = useMutation(api.games.addGame);
   const removeGame = useMutation(api.games.removeGame);
@@ -384,7 +387,10 @@ export function GameSession({ onBack }: GameSessionProps) {
   const displayValue = keypadValue === "" ? "0" : (isNegative ? "-" : "") + keypadValue;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <PullToRefresh
+      onRefresh={refreshData}
+      className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+    >
       {/* Header */}
       <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
@@ -453,7 +459,7 @@ export function GameSession({ onBack }: GameSessionProps) {
               {/* Hidden AlertDialog trigger */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button id="end-session-trigger" className="hidden" />
+                  <button type="button" id="end-session-trigger" className="hidden" />
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -681,6 +687,6 @@ export function GameSession({ onBack }: GameSessionProps) {
         </div>
       </div>
     )}
-    </div>
+    </PullToRefresh>
   );
 }
