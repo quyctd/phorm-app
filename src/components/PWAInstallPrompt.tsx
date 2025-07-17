@@ -45,7 +45,7 @@ export function PWAInstallPrompt() {
 
   const handleInstall = async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
+      await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       
       if (outcome === 'accepted') {
@@ -87,7 +87,9 @@ export function PWAInstallPrompt() {
           <div className="flex gap-2">
             {!isIOS && deferredPrompt && (
               <button
-                onClick={handleInstall}
+                onClick={() => void handleInstall()} 
+                aria-label="Install"
+                type="button"
                 className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-md hover:bg-blue-600 transition-colors"
               >
                 Install
@@ -95,6 +97,8 @@ export function PWAInstallPrompt() {
             )}
             <button
               onClick={handleDismiss}
+              aria-label="Not now"
+              type="button"
               className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-200 transition-colors"
             >
               Not now
@@ -104,6 +108,8 @@ export function PWAInstallPrompt() {
         
         <button
           onClick={handleDismiss}
+          aria-label="Close"
+          type="button"
           className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
         >
           <XCircle size={16} />
