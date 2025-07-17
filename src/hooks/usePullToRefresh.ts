@@ -16,8 +16,8 @@ interface PullToRefreshState {
 
 export function usePullToRefresh({
   onRefresh,
-  threshold = 80,
-  resistance = 2.5,
+  threshold = 60, // Reduced from 80 to make it easier
+  resistance = 2.0, // Reduced from 2.5 to make it more responsive
   enabled = true,
 }: UsePullToRefreshOptions) {
   const [state, setState] = useState<PullToRefreshState>({
@@ -30,10 +30,11 @@ export function usePullToRefresh({
   const startY = useRef<number>(0);
   const currentY = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredHaptic = useRef<boolean>(false);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (!enabled || state.isRefreshing) return;
-    
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -42,6 +43,7 @@ export function usePullToRefresh({
 
     startY.current = e.touches[0].clientY;
     currentY.current = startY.current;
+    hasTriggeredHaptic.current = false; // Reset haptic feedback flag
   }, [enabled, state.isRefreshing]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -59,14 +61,26 @@ export function usePullToRefresh({
     // Only pull down
     if (deltaY <= 0) {
       setState(prev => ({ ...prev, isPulling: false, pullDistance: 0, canRefresh: false }));
+      hasTriggeredHaptic.current = false; // Reset haptic flag
       return;
     }
 
     // Prevent default scrolling when pulling
     e.preventDefault();
 
-    const pullDistance = Math.min(deltaY / resistance, threshold * 1.5);
+    // Make initial pull more responsive, then add resistance
+    const adjustedDeltaY = deltaY < 30 ? deltaY * 1.2 : deltaY;
+    const pullDistance = Math.min(adjustedDeltaY / resistance, threshold * 1.5);
     const canRefresh = pullDistance >= threshold;
+
+    // Trigger haptic feedback when threshold is reached for the first time
+    if (canRefresh && !hasTriggeredHaptic.current) {
+      hasTriggeredHaptic.current = true;
+      // Trigger haptic feedback if available
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50); // Short vibration
+      }
+    }
 
     setState(prev => ({
       ...prev,

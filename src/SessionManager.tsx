@@ -19,7 +19,18 @@ interface SessionManagerProps {
 }
 
 export function SessionManager({ onBack, onNavigateToGame, initialView = "history" }: SessionManagerProps) {
-  const [newSessionName, setNewSessionName] = useState("");
+  // Auto-fill session name with current date when creating new session
+  const generateSessionName = () => {
+    const today = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    };
+    return `Game ${today.toLocaleDateString('en-US', options)}`;
+  };
+
+  const [newSessionName, setNewSessionName] = useState(initialView === "new-session" ? generateSessionName() : "");
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
   const [showNewSession, setShowNewSession] = useState(initialView === "new-session");
   const [isPublic, setIsPublic] = useState(false);
@@ -138,7 +149,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
       <div className="px-6 pb-8">
         {/* New Session Form */}
         {showNewSession && (
-          <div className="mb-8">
+          <div className="mb-8 animate-fade-in">
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <form onSubmit={(e) => void handleCreateSession(e)} className="space-y-6">
                 <div className="space-y-2">
@@ -237,7 +248,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
         {/* Quick Start */}
       {!activeSession && !showNewSession && (
-        <Card className="app-card border-0">
+        <Card className="app-card border-0 animate-slide-in">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl flex items-center gap-3">
               <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -256,7 +267,10 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
             </Button>
             <Button
               variant="outline"
-              onClick={() => setShowNewSession(true)}
+              onClick={() => {
+                setNewSessionName(generateSessionName());
+                setShowNewSession(true);
+              }}
               className="w-full app-button-secondary h-12 text-base font-medium"
             >
               <Plus className="h-5 w-5 mr-2" />
@@ -268,7 +282,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
       {/* Session History */}
       {!showNewSession && sessions.filter(s => !s.isActive).length > 0 && (
-        <div>
+        <div className="animate-fade-in">
           <div className="flex items-center gap-2 mt-4 mb-4">
             <div className="w-8 h-8 bg-gradient-to-br from-gray-400 via-gray-500 to-slate-600 rounded-lg flex items-center justify-center">
               <ClockCounterClockwise className="h-4 w-4 text-white" />

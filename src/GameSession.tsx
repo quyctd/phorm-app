@@ -28,7 +28,8 @@ import {
   AlertDialogTrigger,
 } from "./components/ui/alert-dialog";
 import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
-import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, Backspace, Check, ShareNetwork, DotsThreeVertical } from "@phosphor-icons/react";
+import { GameKeypad } from "./components/GameKeypad";
+import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, ShareNetwork, DotsThreeVertical } from "@phosphor-icons/react";
 
 interface GameSessionProps {
   onBack: () => void;
@@ -57,8 +58,6 @@ export function GameSession({ onBack }: GameSessionProps) {
 
   // Custom keypad state
   const [activeInputPlayer, setActiveInputPlayer] = useState<string | null>(null);
-  const [keypadValue, setKeypadValue] = useState("");
-  const [isNegative, setIsNegative] = useState(true);
 
 
   const allPlayers = useMemo(() =>
@@ -348,43 +347,20 @@ export function GameSession({ onBack }: GameSessionProps) {
   // Custom keypad functions
   const openKeypad = (playerId: string) => {
     setActiveInputPlayer(playerId);
-    const currentValue = newGamePoints[playerId] || "";
-    // Remove the minus sign for keypad value and track it separately
-    const cleanValue = currentValue.startsWith("-") ? currentValue.slice(1) : currentValue;
-    setKeypadValue(cleanValue);
-    setIsNegative(currentValue.startsWith("-"));
   };
 
   const closeKeypad = () => {
     setActiveInputPlayer(null);
-    setKeypadValue("");
-    setIsNegative(false);
   };
 
-  const handleKeypadNumber = (num: string) => {
-    setKeypadValue(prev => prev + num);
-  };
-
-  const handleKeypadBackspace = () => {
-    setKeypadValue(prev => prev.slice(0, -1));
-  };
-
-  const handleKeypadToggleSign = () => {
-    setIsNegative(prev => !prev);
-  };
-
-  const handleKeypadConfirm = () => {
+  const handleKeypadConfirm = (value: string) => {
     if (activeInputPlayer) {
-      const finalValue = keypadValue === "" ? "" : (isNegative ? "-" : "") + keypadValue;
       setNewGamePoints(prev => ({
         ...prev,
-        [activeInputPlayer]: finalValue
+        [activeInputPlayer]: value
       }));
     }
-    closeKeypad();
   };
-
-  const displayValue = keypadValue === "" ? "0" : (isNegative ? "-" : "") + keypadValue;
 
   return (
     <PullToRefresh
@@ -392,7 +368,7 @@ export function GameSession({ onBack }: GameSessionProps) {
       className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
     >
       {/* Header */}
-      <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6">
+      <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6 animate-fade-in">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
         <div className="relative px-6 py-6">
           <div className="flex items-center justify-between mb-4">
@@ -485,9 +461,9 @@ export function GameSession({ onBack }: GameSessionProps) {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 pb-8">
+      <div className="px-6 pb-8 animate-fade-in">
         {/* Player Selection Section */}
-        <div className="mb-6">
+        <div className="mb-6 animate-slide-in">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 bg-gradient-to-br from-slate-400 via-gray-500 to-slate-600 rounded-lg flex items-center justify-center">
               <Users className="h-4 w-4 text-white" />
@@ -530,7 +506,7 @@ export function GameSession({ onBack }: GameSessionProps) {
         </div>
 
         {/* Point Entry Section */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 mt-4">
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 mt-4 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 via-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
@@ -593,100 +569,14 @@ export function GameSession({ onBack }: GameSessionProps) {
       </div>
     </div>
 
-    {/* Custom Keypad Modal */}
-    {activeInputPlayer && (
-      // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-      <div
-        className="fixed inset-0 bg-black/50 flex items-end justify-center z-50"
-        onClick={closeKeypad}
-      >
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-        <div
-          className="bg-white w-full max-w-sm rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Display */}
-          <div className="mb-6">
-            <div className="text-center mb-2">
-              <span className="text-sm text-gray-600">
-                {allPlayers.find(p => p.id === activeInputPlayer)?.name}
-              </span>
-            </div>
-            <div className="bg-gray-100 rounded-xl p-4 text-center">
-              <span className="text-3xl font-bold text-gray-900">
-                {displayValue}
-              </span>
-            </div>
-          </div>
-
-          {/* Keypad */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            {/* Numbers 1-9 */}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <Button
-                key={num}
-                variant="outline"
-                size="lg"
-                onClick={() => handleKeypadNumber(num.toString())}
-                className="h-14 text-xl font-semibold hover:bg-blue-50 hover:border-blue-300"
-              >
-                {num}
-              </Button>
-            ))}
-          </div>
-
-          {/* Bottom row: +/-, 0, Backspace */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleKeypadToggleSign}
-              className={`h-14 text-lg font-semibold ${
-                isNegative
-                  ? "bg-red-50 border-red-300 text-red-600 hover:bg-red-100"
-                  : "bg-green-50 border-green-300 text-green-600 hover:bg-green-100"
-              }`}
-            >
-              {isNegative ? "−" : "+"}
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => handleKeypadNumber("0")}
-              className="h-14 text-xl font-semibold hover:bg-blue-50 hover:border-blue-300"
-            >
-              0
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleKeypadBackspace}
-              className="h-14 hover:bg-gray-50 hover:border-gray-300"
-            >
-              <Backspace className="h-6 w-6" />
-            </Button>
-          </div>
-
-          {/* Action buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              onClick={closeKeypad}
-              className="h-12 text-base font-medium"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleKeypadConfirm}
-              className="h-12 text-base font-medium bg-green-500 hover:bg-green-600 text-white"
-            >
-              <Check className="h-5 w-5 mr-2" />
-              Confirm
-            </Button>
-          </div>
-        </div>
-      </div>
-    )}
+    {/* Game Keypad */}
+    <GameKeypad
+      isOpen={activeInputPlayer !== null}
+      playerName={allPlayers.find(p => p.id === activeInputPlayer)?.name || ""}
+      initialValue={activeInputPlayer ? newGamePoints[activeInputPlayer] || "" : ""}
+      onClose={closeKeypad}
+      onConfirm={handleKeypadConfirm}
+    />
     </PullToRefresh>
   );
 }

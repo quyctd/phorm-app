@@ -79,7 +79,7 @@ export function PlayerHistoryDrawer({
       <DrawerTrigger asChild>
         {trigger}
       </DrawerTrigger>
-      <DrawerContent className="max-h-[85vh]">
+      <DrawerContent className="h-[80vh]">
         <DrawerHeader>
           <DrawerTitle className="flex items-center gap-2 justify-center">
             <Trophy className="h-5 w-5" />
