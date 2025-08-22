@@ -7,7 +7,6 @@ import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
-import { PullToRefresh } from "./components/PullToRefresh";
 import { useConvexRefresh } from "./hooks/useConvexRefresh";
 import { ArrowLeft, Play, Plus, Trophy, Eye, ClockCounterClockwise, X, UserPlus, Share, Lock, Shuffle, Copy } from "@phosphor-icons/react";
 import type { Id } from "../convex/_generated/dataModel";
@@ -146,10 +145,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
   };
 
   return (
-    <PullToRefresh
-      onRefresh={refreshData}
-      className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
-    >
+    <>
       {/* Header */}
       <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
@@ -437,7 +433,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
         </div>
       )}
       </div>
-    </PullToRefresh>
+    </>
   );
 }
 
