@@ -1,0 +1,238 @@
+{
+  "common": {
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "close": "Đóng",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "warning": "Cảnh báo",
+    "info": "Thông tin",
+    "yes": "Có",
+    "no": "Không",
+    "ok": "OK",
+    "retry": "Thử lại",
+    "copy": "Sao chép",
+    "share": "Chia sẻ",
+    "add": "Thêm",
+    "remove": "Xóa",
+    "points": "điểm",
+    "player": "Người chơi",
+    "players": "Người chơi",
+    "game": "Ván chơi",
+    "games": "Ván chơi",
+    "session": "Phiên",
+    "sessions": "Phiên"
+  },
+  "app": {
+    "title": "Phorm",
+    "subtitle": "Ứng dụng tính điểm"
+  },
+  "home": {
+    "title": "Phorm",
+    "subtitle": "Ứng dụng tính điểm",
+    "readyToStart": "Sẵn sàng bắt đầu trò chơi mới!",
+    "createSession": "Tạo phiên với người chơi hoặc tham gia phiên có sẵn",
+    "quickActions": "Hành động nhanh",
+    "newGame": {
+      "title": "Trò chơi mới",
+      "description": "Tạo phiên trò chơi mới với người chơi của bạn"
+    },
+    "joinGame": {
+      "title": "Tham gia",
+      "description": "Nhập mã 6 chữ số để tham gia trò chơi có sẵn"
+    },
+    "history": {
+      "title": "Lịch sử",
+      "description": "Xem các trò chơi và kết quả trước đây"
+    }
+  },
+  "sessionManager": {
+    "title": "Phiên",
+    "newSession": "Phiên mới",
+    "createNewSession": "Tạo phiên trò chơi mới",
+    "viewHistory": "Xem lịch sử phiên",
+    "quickStart": {
+      "title": "Bắt đầu nhanh",
+      "description": "Bắt đầu trò chơi với 2 người chơi mặc định",
+      "startNow": "Bắt đầu ngay",
+      "custom": "Phiên tùy chỉnh"
+    },
+    "form": {
+      "sessionName": "Tên phiên",
+      "sessionNamePlaceholder": "Nhập tên phiên",
+      "playersLabel": "Người chơi (đã thêm {{count}})",
+      "playerPlaceholder": "Tên người chơi {{number}}",
+      "addPlayer": "Thêm người chơi",
+      "passcode": {
+        "title": "Mã trò chơi",
+        "autoGenerate": {
+          "title": "Tự động tạo",
+          "description": "Mã 6 chữ số ngẫu nhiên sẽ được tạo tự động"
+        },
+        "custom": {
+          "title": "Mã tùy chỉnh",
+          "description": "Đặt mã 6 chữ số dễ nhớ của riêng bạn",
+          "placeholder": "123456",
+          "progressText": "Nhập thêm {{count}} chữ số"
+        }
+      },
+      "createSession": "Tạo phiên",
+      "validation": {
+        "minPlayers": "Vui lòng thêm ít nhất 2 người chơi",
+        "passcodeRequired": "Vui lòng nhập mã hoặc tắt mã tùy chỉnh",
+        "passcodeInvalid": "Mã phải có đúng 6 chữ số"
+      }
+    },
+    "history": {
+      "title": "Phiên gần đây",
+      "finalResults": "Kết quả cuối cùng và phân tích từng ván"
+    },
+    "messages": {
+      "sessionCreated": "Phiên đã được tạo thành công",
+      "createFailed": "Không thể tạo phiên"
+    }
+  },
+  "gameSession": {
+    "title": "Phiên trò chơi",
+    "gameNumber": "Ván {{number}}",
+    "noActiveSession": "Không có phiên hoạt động",
+    "startNewSession": "Bắt đầu phiên mới",
+    "inactive": "Không hoạt động",
+    "currentStandings": "Bảng xếp hạng hiện tại",
+    "details": "Chi tiết",
+    "champion": "🏆 Vô địch",
+    "behind": "kém {{count}} điểm",
+    "behindLeader": "kém người dẫn đầu {{count}} điểm",
+    "morePlayer": "+{{count}} người chơi khác",
+    "players": "Người chơi",
+    "gamePoints": "Điểm ván {{number}}",
+    "savingGame": "Đang lưu ván {{number}}...",
+    "autoCalc": "Tự tính",
+    "autoCalcHint": "💡 Để trống một người chơi để tự động tính điểm",
+    "tapToEnter": "chạm để nhập",
+    "auto": "tự động",
+    "addGame": "Thêm ván {{number}}",
+    "addingGame": "Đang thêm ván {{number}}...",
+    "enterPoints": "Nhập điểm {{count}} người chơi",
+    "enterAllPoints": "Nhập điểm tất cả {{count}} người chơi",
+    "addPlayer": "Thêm",
+    "shareSession": "Chia sẻ phiên",
+    "gameSettings": "Cài đặt trò chơi",
+    "endSession": "Kết thúc phiên",
+    "endSessionConfirm": "Kết thúc phiên?",
+    "endSessionDescription": "Điều này sẽ kết thúc \"{{sessionName}}\". Tất cả dữ liệu sẽ được lưu.",
+    "shareText": "Tham gia trò chơi \"{{sessionName}}\" của tôi!\n\nMã: {{passcode}}\n\nMở Phorm và sử dụng mã để tham gia trò chơi.",
+    "shareTitle": "Tham gia phiên trò chơi \"{{sessionName}}\"",
+    "messages": {
+      "gameAdded": "Đã thêm ván chơi thành công!",
+      "gameRemoved": "Đã xóa ván chơi thành công!",
+      "sessionEnded": "Đã kết thúc phiên thành công!",
+      "addPlayerSuccess": "{{playerName}} đã được thêm vào phiên!",
+      "minPlayersRequired": "Cần ít nhất 2 người chơi cho một ván",
+      "selectMinPlayers": "Vui lòng chọn ít nhất 2 người chơi cho ván",
+      "invalidNumber": "Số không hợp lệ cho {{playerName}}: \"{{value}}\"",
+      "autoCalcError": "Khi bật tự động tính, hãy để trống điểm của một người chơi",
+      "autoCalcPlayersError": "Khi bật tự động tính, nhập điểm cho đúng {{count}} người chơi (để trống 1)",
+      "enterAllPlayersPoints": "Vui lòng nhập điểm cho tất cả người chơi được chọn hoặc bật tự động tính",
+      "pointsValidationFailed": "Xác thực điểm thất bại. Vui lòng kiểm tra đầu vào.",
+      "addGameFailed": "Không thể thêm ván. Vui lòng thử lại.",
+      "removeGameFailed": "Không thể xóa ván",
+      "endSessionFailed": "Không thể kết thúc phiên",
+      "addPlayerFailed": "Không thể thêm người chơi. Vui lòng thử lại.",
+      "passcodeShared": "Đã chia sẻ mã trò chơi thành công!",
+      "passcodeCopied": "Đã sao chép mã trò chơi vào clipboard!",
+      "sharePasscode": "Chia sẻ mã này: {{passcode}}"
+    }
+  },
+  "gameKeypad": {
+    "title": "Nhập điểm cho {{playerName}}",
+    "currentValue": "Hiện tại: {{value}}",
+    "clear": "Xóa",
+    "backspace": "⌫",
+    "confirm": "Xác nhận"
+  },
+  "addPlayerModal": {
+    "title": "Thêm người chơi mới",
+    "description": "Thêm người chơi vào phiên hiện tại",
+    "playerName": "Tên người chơi",
+    "playerNamePlaceholder": "Nhập tên người chơi",
+    "addPlayer": "Thêm người chơi",
+    "validation": {
+      "nameRequired": "Vui lòng nhập tên người chơi",
+      "nameExists": "Tên người chơi đã tồn tại",
+      "nameTooLong": "Tên người chơi quá dài"
+    },
+    "messages": {
+      "addPlayerSuccess": "Đã thêm người chơi thành công!",
+      "addPlayerFailed": "Không thể thêm người chơi. Vui lòng thử lại."
+    }
+  },
+  "gameResultsModal": {
+    "title": "Kết quả ván {{number}}",
+    "description": "Điểm được trao và bảng xếp hạng hiện tại",
+    "pointsAwarded": "Điểm được trao",
+    "currentLeaderboard": "Bảng xếp hạng hiện tại",
+    "continueTo": "Tiếp tục ván {{number}}",
+    "autoAdvance": "Tự động chuyển trong {{seconds}}s..."
+  },
+  "gameSettingsModal": {
+    "title": "Cài đặt trò chơi",
+    "description": "Quản lý cài đặt cho \"{{sessionName}}\"",
+    "currentPasscode": "Mã hiện tại",
+    "shareHint": "Chia sẻ mã này với người chơi để tham gia trò chơi",
+    "newPasscode": "Mã mới",
+    "newPasscodePlaceholder": "Nhập 6 chữ số",
+    "generateRandom": "Tạo mã ngẫu nhiên",
+    "newPasscodeHint": "Nhập đúng 6 chữ số cho mã mới",
+    "updatePasscode": "Cập nhật mã",
+    "updating": "Đang cập nhật...",
+    "validation": {
+      "passcodeRequired": "Vui lòng nhập mã mới",
+      "passcodeInvalid": "Mã phải có đúng 6 chữ số",
+      "passcodeSame": "Mã mới phải khác mã hiện tại"
+    },
+    "messages": {
+      "passcodeUpdated": "Đã cập nhật mã thành công!",
+      "passcodeUpdateFailed": "Không thể cập nhật mã. Vui lòng thử lại.",
+      "passcodeCopied": "Đã sao chép mã hiện tại vào clipboard!",
+      "passcodeCopyFailed": "Không thể sao chép mã"
+    }
+  },
+  "joinGameModal": {
+    "title": "Tham gia trò chơi",
+    "description": "Nhập mã 6 chữ số để tham gia trò chơi có sẵn",
+    "passcode": "Mã trò chơi",
+    "passcodePlaceholder": "Nhập 6 chữ số",
+    "joinGame": "Tham gia",
+    "joining": "Đang tham gia...",
+    "validation": {
+      "passcodeRequired": "Vui lòng nhập mã",
+      "passcodeInvalid": "Mã phải có đúng 6 chữ số"
+    },
+    "messages": {
+      "joinSuccess": "Đã tham gia trò chơi thành công!",
+      "joinFailed": "Không thể tham gia. Vui lòng kiểm tra mã và thử lại.",
+      "gameNotFound": "Không tìm thấy trò chơi hoạt động với mã này",
+      "alreadyJoined": "Bạn đã tham gia trò chơi này rồi"
+    }
+  },
+  "playerHistoryDrawer": {
+    "title": "Bảng xếp hạng & Lịch sử",
+    "gameByGame": "Phân tích từng ván",
+    "finalStandings": "Bảng xếp hạng cuối",
+    "gameNumber": "Ván {{number}}",
+    "autoCalculated": "(tự động tính)",
+    "totalPoints": "Tổng: {{points}} điểm"
+  },
+  "languageSwitcher": {
+    "language": "Ngôn ngữ",
+    "english": "English",
+    "vietnamese": "Tiếng Việt"
+  }
+}

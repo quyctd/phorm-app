@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Lock, X } from "@phosphor-icons/react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 interface JoinGameModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (sessionId: string) => void;
+  onSuccess: (sessionId: Id<"sessions">) => void;
 }
 
 export function JoinGameModal({ isOpen, onClose, onSuccess }: JoinGameModalProps) {
+  const { t } = useTranslation();
   const [passcode, setPasscode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const joinByPasscode = useMutation(api.sessions.joinByPasscode);
@@ -21,21 +24,27 @@ export function JoinGameModal({ isOpen, onClose, onSuccess }: JoinGameModalProps
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!passcode.trim()) {
+      toast.error(t('joinGameModal.validation.passcodeRequired'));
+      return;
+    }
+
     if (passcode.length !== 6) {
-      toast.error("Passcode must be exactly 6 digits");
+      toast.error(t('joinGameModal.validation.passcodeInvalid'));
       return;
     }
 
     setIsJoining(true);
     try {
       const session = await joinByPasscode({ passcode });
-      toast.success(`Joined "${session.name}"!`);
+      toast.success(t('joinGameModal.messages.joinSuccess'));
       onSuccess(session._id);
       onClose();
       setPasscode("");
     } catch (error) {
       console.error("Failed to join session:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to join session");
+      const message = error instanceof Error ? error.message : t('joinGameModal.messages.joinFailed');
+      toast.error(message);
     } finally {
       setIsJoining(false);
     }
@@ -64,8 +73,8 @@ export function JoinGameModal({ isOpen, onClose, onSuccess }: JoinGameModalProps
               <Lock className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Join Game</h2>
-              <p className="text-sm text-gray-600">Enter the 6-digit passcode</p>
+              <h2 className="text-xl font-bold text-gray-900">{t('joinGameModal.title')}</h2>
+              <p className="text-sm text-gray-600">{t('joinGameModal.description')}</p>
             </div>
           </div>
           <Button
@@ -82,14 +91,14 @@ export function JoinGameModal({ isOpen, onClose, onSuccess }: JoinGameModalProps
         <form onSubmit={handleJoin} className="space-y-6">
           <div>
             <Label htmlFor="passcode" className="text-sm font-medium text-gray-700 mb-2 block">
-              Game Passcode
+              {t('joinGameModal.passcode')}
             </Label>
             <Input
               id="passcode"
               type="text"
               value={passcode}
               onChange={(e) => handlePasscodeChange(e.target.value)}
-              placeholder="123456"
+              placeholder={t('joinGameModal.passcodePlaceholder')}
               className="h-14 text-center text-2xl font-mono tracking-widest border-2 focus:border-blue-500"
               maxLength={6}
               autoFocus
@@ -109,7 +118,7 @@ export function JoinGameModal({ isOpen, onClose, onSuccess }: JoinGameModalProps
               className="flex-1 h-12 text-base font-medium"
               disabled={isJoining}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
@@ -117,9 +126,12 @@ export function JoinGameModal({ isOpen, onClose, onSuccess }: JoinGameModalProps
               disabled={isJoining || passcode.length !== 6}
             >
               {isJoining ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  {t('joinGameModal.joining')}
+                </>
               ) : (
-                "Join Game"
+                t('joinGameModal.joinGame')
               )}
             </Button>
           </div>

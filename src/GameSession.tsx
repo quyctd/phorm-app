@@ -63,11 +63,62 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAddingGame, setIsAddingGame] = useState(false);
 
-
   const allPlayers = useMemo(() =>
     activeSession ? activeSession.players : [],
     [activeSession]
   );
+
+  const selectedPlayers = useMemo(() => 
+    allPlayers.filter(player => selectedPlayerIds.includes(player.id)),
+    [allPlayers, selectedPlayerIds]
+  );
+
+  // Generate avatar initials and colors
+  const getPlayerAvatar = (name: string) => {
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const colors = [
+      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
+      'bg-indigo-500', 'bg-yellow-500', 'bg-red-500', 'bg-teal-500'
+    ];
+    const colorIndex = name.length % colors.length;
+    return { initials, color: colors[colorIndex] };
+  };
+
+  // Get player's game history
+  const getPlayerGameHistory = (playerId: string) => {
+    return games.map(game => ({
+      gameNumber: game.gameNumber,
+      points: game.points[playerId] || 0,
+      gameId: game._id,
+      autoCalculated: game.autoCalculated
+    })).filter(game => game.points !== 0 || Object.keys(games.find(g => g._id === game.gameId)?.points || {}).includes(playerId));
+  };
+
+  // Calculate final results sorted by points (lowest first) - for all players in session
+  const finalResults = allPlayers
+    .map((player) => ({
+      player,
+      total: totals[player.id] || 0,
+    }))
+    .sort((a, b) => a.total - b.total);
+
+  // Validation: Check if enough points are inputted
+  const hasEnoughPointsInputted = useMemo(() => {
+    if (selectedPlayers.length === 0) return false;
+    
+    const inputtedCount = selectedPlayers.filter(player => {
+      const points = newGamePoints[player.id];
+      return points && points.trim() !== "" && points !== "0";
+    }).length;
+    
+    if (autoCalculate) {
+      // With auto-calculate, need at least (total players - 1) inputs
+      return inputtedCount >= selectedPlayers.length - 1;
+    }
+    
+    // Without auto-calculate, need all players to have input
+    return inputtedCount === selectedPlayers.length;
+  }, [selectedPlayers, newGamePoints, autoCalculate]);
 
   // Initialize selected players only once when component mounts
   useEffect(() => {
@@ -103,109 +154,36 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
     }
   }, [isInitialized, allPlayers, activeSession]);
 
-  // Auto-select newly added players
+  // Auto-select newly added players (only when allPlayers changes, not when selectedPlayerIds changes)
   useEffect(() => {
     if (isInitialized && activeSession) {
       const currentPlayerIds = allPlayers.map(p => p.id);
-      const newPlayerIds = currentPlayerIds.filter(id => !selectedPlayerIds.includes(id));
       
-      if (newPlayerIds.length > 0) {
-        const updatedSelection = [...selectedPlayerIds, ...newPlayerIds];
-        setSelectedPlayerIds(updatedSelection);
+      setSelectedPlayerIds(prev => {
+        const newPlayerIds = currentPlayerIds.filter(id => !prev.includes(id));
         
-        // Save to localStorage
-        const storageKey = `selectedPlayers_${activeSession._id}`;
-        localStorage.setItem(storageKey, JSON.stringify(updatedSelection));
-      }
+        if (newPlayerIds.length > 0) {
+          const updatedSelection = [...prev, ...newPlayerIds];
+          
+          // Save to localStorage
+          const storageKey = `selectedPlayers_${activeSession._id}`;
+          localStorage.setItem(storageKey, JSON.stringify(updatedSelection));
+          
+          return updatedSelection;
+        }
+        
+        return prev;
+      });
     }
-  }, [allPlayers, selectedPlayerIds, isInitialized, activeSession]);
+  }, [allPlayers, isInitialized, activeSession]);
 
-  if (!activeSession) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        {/* Modern Header - No Session */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 p-6 shadow-sm border border-gray-100">
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-500/5 to-slate-500/5" />
-          <div className="relative flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onBack} 
-              className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all hover:scale-105"
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-700" />
-            </Button>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center">
-                  <Target className="h-4 w-4 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Game Session</h1>
-              </div>
-              <p className="text-gray-600 text-base font-medium">
-                No active session found
-              </p>
-            </div>
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="px-3 py-1 rounded-full bg-white/60 backdrop-blur-sm">
-                <span className="text-sm font-medium text-gray-700">Inactive</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Card className="app-card border-2 border-dashed border-gray-200 bg-gray-50">
-          <CardContent className="text-center p-8 space-y-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto">
-              <Target className="h-8 w-8 text-gray-500" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold text-gray-900 text-xl">No Active Session</h3>
-              <p className="text-gray-600 text-base">
-                Start a new session to begin tracking points
-              </p>
-            </div>
-            <Button onClick={onBack} className="w-full app-button-secondary h-12 text-base font-medium">
-              <Play className="h-5 w-5 mr-2" />
-              Start New Session
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const selectedPlayers = allPlayers.filter(player => selectedPlayerIds.includes(player.id));
-
-  // Generate avatar initials and colors
-  const getPlayerAvatar = (name: string) => {
-    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
-      'bg-indigo-500', 'bg-yellow-500', 'bg-red-500', 'bg-teal-500'
-    ];
-    const colorIndex = name.length % colors.length;
-    return { initials, color: colors[colorIndex] };
-  };
-
-
-
-  // Get player's game history
-  const getPlayerGameHistory = (playerId: string) => {
-    return games.map(game => ({
-      gameNumber: game.gameNumber,
-      points: game.points[playerId] || 0,
-      gameId: game._id,
-      autoCalculated: game.autoCalculated
-    })).filter(game => game.points !== 0 || Object.keys(games.find(g => g._id === game.gameId)?.points || {}).includes(playerId));
-  };
-
-
-
+  // Functions moved here to ensure all hooks are called before conditional returns
   const togglePlayerSelection = (playerId: string) => {
     setSelectedPlayerIds(prev => {
+      const wasSelected = prev.includes(playerId);
       let newSelection: string[];
-      if (prev.includes(playerId)) {
+      
+      if (wasSelected) {
         // Don't allow deselecting if it would leave less than 2 players
         if (prev.length <= 2) {
           toast.error("At least 2 players are required for a game");
@@ -377,32 +355,6 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
     }
   };
 
-  // Calculate final results sorted by points (lowest first) - for all players in session
-  const finalResults = allPlayers
-    .map((player) => ({
-      player,
-      total: totals[player.id] || 0,
-    }))
-    .sort((a, b) => a.total - b.total);
-
-  // Validation: Check if enough points are inputted
-  const hasEnoughPointsInputted = useMemo(() => {
-    if (selectedPlayers.length === 0) return false;
-    
-    const inputtedCount = selectedPlayers.filter(player => {
-      const points = newGamePoints[player.id];
-      return points && points.trim() !== "" && points !== "0";
-    }).length;
-    
-    if (autoCalculate) {
-      // With auto-calculate, need at least (total players - 1) inputs
-      return inputtedCount >= selectedPlayers.length - 1;
-    }
-    
-    // Without auto-calculate, need all players to have input
-    return inputtedCount === selectedPlayers.length;
-  }, [selectedPlayers, newGamePoints, autoCalculate]);
-
   // Open keypad using NiceModal
   const openKeypad = (playerId: string) => {
     const player = allPlayers.find(p => p.id === playerId);
@@ -443,6 +395,61 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
       onConfirm: handleAddPlayer
     });
   };
+
+  if (!activeSession) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        {/* Modern Header - No Session */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 p-6 shadow-sm border border-gray-100">
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-500/5 to-slate-500/5" />
+          <div className="relative flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onBack} 
+              className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all hover:scale-105"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-700" />
+            </Button>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center">
+                  <Target className="h-4 w-4 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Game Session</h1>
+              </div>
+              <p className="text-gray-600 text-base font-medium">
+                No active session found
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="px-3 py-1 rounded-full bg-white/60 backdrop-blur-sm">
+                <span className="text-sm font-medium text-gray-700">Inactive</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Card className="app-card border-2 border-dashed border-gray-200 bg-gray-50">
+          <CardContent className="text-center p-8 space-y-4">
+            <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto">
+              <Target className="h-8 w-8 text-gray-500" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-gray-900 text-xl">No Active Session</h3>
+              <p className="text-gray-600 text-base">
+                Start a new session to begin tracking points
+              </p>
+            </div>
+            <Button onClick={onBack} className="w-full app-button-secondary h-12 text-base font-medium">
+              <Play className="h-5 w-5 mr-2" />
+              Start New Session
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <PullToRefresh
@@ -545,140 +552,110 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
 
       {/* Main Content */}
       <div className="px-6 pb-8 animate-fade-in">
-        {/* Current Leaderboard Section - Always rendered to prevent layout shifts */}
-        <div className="mb-6">
-          {games.length > 0 ? (
-            <div className="animate-fade-in">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 rounded-lg flex items-center justify-center">
-                    <Trophy className="h-4 w-4 text-white" />
-                  </div>
-                  <h2 className="text-lg font-semibold text-gray-900">Current Standings</h2>
+                {/* Current Leaderboard Section - Only show when there are games */}
+        {games.length > 0 && (
+          <div className="mb-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 rounded-lg flex items-center justify-center">
+                  <Trophy className="h-4 w-4 text-white" />
                 </div>
-                <PlayerHistoryDrawer
-                  trigger={
-                    <Button variant="outline" size="sm" className="border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-colors text-xs">
-                      <Trophy className="h-3 w-3 mr-1" />
-                      Details
-                    </Button>
-                  }
-                  title="Leaderboard & History"
-                  description="Current standings and game-by-game breakdown"
-                  results={finalResults}
-                  getPlayerGameHistory={getPlayerGameHistory}
-                  onRemoveGame={(gameId) => void handleRemoveGame(gameId)}
-                  showRemoveButtons={true}
-                />
+                <h2 className="text-lg font-semibold text-gray-900">Current Standings</h2>
               </div>
-              <div className="bg-white rounded-2xl p-4 border border-gray-200">
-                <div className="space-y-3">
-                  {finalResults.slice(0, 5).map((result, index) => {
-                    const avatar = getPlayerAvatar(result.player.name);
-                    const isTopThree = index < 3;
-                    
-                    // Special styling for top 3
-                    const getPositionStyling = () => {
-                      switch (index) {
-                        case 0: // 1st place - Gold
-                          return {
-                            container: "bg-gradient-to-r from-yellow-50 via-amber-50 to-yellow-100 border-2 border-yellow-300 shadow-md transform scale-[1.02]",
-                            badge: "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-lg",
-                            icon: <CrownSimple className="h-4 w-4" weight="fill" />,
-                            nameColor: "text-yellow-900 font-bold",
-                            pointsColor: "text-yellow-700 font-extrabold",
-                            status: "🏆 Champion"
-                          };
-                        case 1: // 2nd place - Silver  
-                          return {
-                            container: "bg-gradient-to-r from-gray-50 via-slate-50 to-gray-100 border-2 border-gray-300 shadow-sm",
-                            badge: "bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-md",
-                            icon: <Medal className="h-4 w-4" weight="fill" />,
-                            nameColor: "text-gray-900 font-semibold",
-                            pointsColor: "text-gray-700 font-bold",
-                            status: `${Math.abs(result.total - finalResults[0].total)} behind`
-                          };
-                        default: // 4th, 5th place
-                          return {
-                            container: "bg-gray-50 border border-gray-100",
-                            badge: "bg-gray-200 text-gray-600",
-                            icon: null,
-                            nameColor: "text-gray-900",
-                            pointsColor: "text-gray-700",
-                            status: `${Math.abs(result.total - finalResults[0].total)} behind leader`
-                          };
-                      }
-                    };
-
-                    const styling = getPositionStyling();
-
-                    return (
-                      <div
-                        key={result.player.id}
-                        className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-200 ${styling.container}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${styling.badge} ${isTopThree ? 'shadow-lg' : ''}`}>
-                            {styling.icon || (index + 1)}
-                          </div>
-                          <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color} ${isTopThree ? 'shadow-md' : ''}`}>
-                            {avatar.initials}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className={styling.nameColor}>
-                            {result.player.name}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {styling.status}
-                          </div>
-                        </div>
-                        <div className={`text-xl ${styling.pointsColor}`}>
-                          {result.total}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {finalResults.length > 5 && (
-                    <div className="text-center pt-2">
-                      <span className="text-xs text-gray-500">
-                        +{finalResults.length - 5} more player{finalResults.length - 5 !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <PlayerHistoryDrawer
+                trigger={
+                  <Button variant="outline" size="sm" className="border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-colors text-xs">
+                    <Trophy className="h-3 w-3 mr-1" />
+                    Details
+                  </Button>
+                }
+                title="Leaderboard & History"
+                description="Current standings and game-by-game breakdown"
+                results={finalResults}
+                getPlayerGameHistory={getPlayerGameHistory}
+                onRemoveGame={(gameId) => void handleRemoveGame(gameId)}
+                showRemoveButtons={true}
+              />
             </div>
-          ) : (
-            // Placeholder to maintain layout stability
-            <div className="opacity-0 pointer-events-none" aria-hidden="true">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-200 rounded-lg" />
-                  <div className="h-6 w-32 bg-gray-200 rounded" />
-                </div>
-                <div className="h-8 w-16 bg-gray-200 rounded" />
-              </div>
-              <div className="bg-gray-100 rounded-2xl p-4 border border-gray-200">
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50">
+            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+              <div className="space-y-3">
+                {finalResults.slice(0, 5).map((result, index) => {
+                  const avatar = getPlayerAvatar(result.player.name);
+                  const isTopThree = index < 3;
+                  
+                  // Special styling for top 3
+                  const getPositionStyling = () => {
+                    switch (index) {
+                      case 0: // 1st place - Gold
+                        return {
+                          container: "bg-gradient-to-r from-yellow-50 via-amber-50 to-yellow-100 border-2 border-yellow-300 shadow-md transform scale-[1.02]",
+                          badge: "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-lg",
+                          icon: <CrownSimple className="h-4 w-4" weight="fill" />,
+                          nameColor: "text-yellow-900 font-bold",
+                          pointsColor: "text-yellow-700 font-extrabold",
+                          status: "🏆 Champion"
+                        };
+                      case 1: // 2nd place - Silver  
+                        return {
+                          container: "bg-gradient-to-r from-gray-50 via-slate-50 to-gray-100 border-2 border-gray-300 shadow-sm",
+                          badge: "bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-md",
+                          icon: <Medal className="h-4 w-4" weight="fill" />,
+                          nameColor: "text-gray-900 font-semibold",
+                          pointsColor: "text-gray-700 font-bold",
+                          status: `${Math.abs(result.total - finalResults[0].total)} behind`
+                        };
+                      default: // 4th, 5th place
+                        return {
+                          container: "bg-gray-50 border border-gray-100",
+                          badge: "bg-gray-200 text-gray-600",
+                          icon: null,
+                          nameColor: "text-gray-900",
+                          pointsColor: "text-gray-700",
+                          status: `${Math.abs(result.total - finalResults[0].total)} behind leader`
+                        };
+                    }
+                  };
+
+                  const styling = getPositionStyling();
+
+                  return (
+                    <div
+                      key={result.player.id}
+                      className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-200 ${styling.container}`}
+                    >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-200 rounded-full" />
-                        <div className="w-11 h-11 bg-gray-200 rounded-full" />
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${styling.badge} ${isTopThree ? 'shadow-lg' : ''}`}>
+                          {styling.icon || (index + 1)}
+                        </div>
+                        <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color} ${isTopThree ? 'shadow-md' : ''}`}>
+                          {avatar.initials}
+                        </div>
                       </div>
                       <div className="flex-1">
-                        <div className="h-4 w-20 bg-gray-200 rounded mb-1" />
-                        <div className="h-3 w-16 bg-gray-200 rounded" />
+                        <div className={styling.nameColor}>
+                          {result.player.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {styling.status}
+                        </div>
                       </div>
-                      <div className="h-6 w-8 bg-gray-200 rounded" />
+                      <div className={`text-xl ${styling.pointsColor}`}>
+                        {result.total}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+                {finalResults.length > 5 && (
+                  <div className="text-center pt-2">
+                    <span className="text-xs text-gray-500">
+                      +{finalResults.length - 5} more player{finalResults.length - 5 !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Compact Player Selection */}
         <div className="mb-4 animate-slide-in">
@@ -703,7 +680,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
             </div>
             
             {/* Compact horizontal scrollable player list */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 flex-wrap">
             {allPlayers.map((player) => {
               const avatar = getPlayerAvatar(player.name);
               const isSelected = selectedPlayerIds.includes(player.id);
@@ -711,12 +688,16 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 <button
                   key={player.id}
                   type="button"
-                    className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
                     isSelected
-                        ? "bg-blue-50 border-blue-300"
-                        : "hover:bg-gray-50 border-gray-200"
+                      ? "bg-blue-50 border-blue-300"
+                      : "hover:bg-gray-50 border-gray-200"
                   }`}
-                  onClick={() => togglePlayerSelection(player.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    togglePlayerSelection(player.id);
+                  }}
                 >
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs ${avatar.color} ${
                       isSelected ? "ring-1 ring-blue-400" : ""
@@ -775,7 +756,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
           )}
           <form onSubmit={(e) => void handleAddGame(e)} className="space-y-4">
             {/* Compact Grid Layout - 2 columns on larger screens */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {selectedPlayers.map((player) => {
                 const pointValue = newGamePoints[player.id] || (autoCalculate ? "auto" : "0");
                 const isAutoValue = pointValue === "auto";
@@ -793,11 +774,17 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                     `}
                   >
                     <div className="flex items-center justify-between w-full">
+                      {/* Player avatar - left side */}
+                      <div className="flex items-center gap-2 mr-2">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs ${getPlayerAvatar(player.name).color}`}>
+                          {getPlayerAvatar(player.name).initials}
+                        </div>
+                      </div>
                       {/* Player name - left side */}
                       <div className="flex-1 text-left">
                         <div className="font-medium text-sm text-gray-900 truncate">
                           {player.name}
-                        </div>
+                </div>
                         <div className="text-xs text-gray-500">
                           tap to enter
                         </div>

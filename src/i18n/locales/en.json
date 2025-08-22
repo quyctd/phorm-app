@@ -1,0 +1,242 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "retry": "Retry",
+    "copy": "Copy",
+    "share": "Share",
+    "add": "Add",
+    "remove": "Remove",
+    "points": "points",
+    "player": "Player",
+    "players": "Players",
+    "game": "Game",
+    "games": "Games",
+    "session": "Session",
+    "sessions": "Sessions"
+  },
+  "app": {
+    "title": "Phorm",
+    "subtitle": "Game Score Tracker"
+  },
+  "home": {
+    "title": "Phorm",
+    "subtitle": "Game Score Tracker",
+    "readyToStart": "Ready to start a new game!",
+    "createSession": "Create a session with your players or join an existing one",
+    "quickActions": "Quick Actions",
+    "newGame": {
+      "title": "New Game",
+      "description": "Create a new game session with your players"
+    },
+    "joinGame": {
+      "title": "Join Game",
+      "description": "Enter a 6-digit passcode to join an existing game"
+    },
+    "history": {
+      "title": "History",
+      "description": "Review past games and results"
+    }
+  },
+  "sessionManager": {
+    "title": "Sessions",
+    "newSession": "New Session",
+    "createNewSession": "Create a new game session",
+    "viewHistory": "View session history",
+    "quickStart": {
+      "title": "Quick Start",
+      "description": "Start a game with 2 default players",
+      "startNow": "Start Game Now",
+      "custom": "Custom Session"
+    },
+    "form": {
+      "sessionName": "Session Name",
+      "sessionNamePlaceholder": "Enter session name",
+      "playersLabel": "Players ({{count}} added)",
+      "playerPlaceholder": "Player {{number}} name",
+      "addPlayer": "Add Player",
+      "passcode": {
+        "title": "Game Passcode",
+        "autoGenerate": {
+          "title": "Auto-generate",
+          "description": "A random 6-digit passcode will be created automatically"
+        },
+        "custom": {
+          "title": "Custom passcode",
+          "description": "Set your own memorable 6-digit passcode",
+          "placeholder": "123456",
+          "progressText": "Enter {{count}} more digit",
+          "progressText_other": "Enter {{count}} more digits"
+        }
+      },
+      "createSession": "Create Session",
+      "validation": {
+        "minPlayers": "Please add at least 2 players",
+        "passcodeRequired": "Please enter a passcode or disable custom passcode",
+        "passcodeInvalid": "Passcode must be exactly 6 digits"
+      }
+    },
+    "history": {
+      "title": "Recent Sessions",
+      "finalResults": "Final results and game-by-game breakdown"
+    },
+    "messages": {
+      "sessionCreated": "Session started successfully",
+      "createFailed": "Failed to create session"
+    }
+  },
+  "gameSession": {
+    "title": "Game Session",
+    "gameNumber": "Game {{number}}",
+    "noActiveSession": "No Active Session",
+    "startNewSession": "Start New Session",
+    "inactive": "Inactive",
+    "currentStandings": "Current Standings",
+    "details": "Details",
+    "champion": "🏆 Champion",
+    "behind": "{{count}} behind",
+    "behindLeader": "{{count}} behind leader",
+    "morePlayer": "+{{count}} more player",
+    "morePlayer_other": "+{{count}} more players",
+    "players": "Players",
+    "gamePoints": "Game {{number}} Points",
+    "savingGame": "Saving Game {{number}}...",
+    "autoCalc": "Auto-calc",
+    "autoCalcHint": "💡 Leave one player empty to auto-calculate",
+    "tapToEnter": "tap to enter",
+    "auto": "auto",
+    "addGame": "Add Game {{number}}",
+    "addingGame": "Adding Game {{number}}...",
+    "enterPoints": "Enter {{count}} player points",
+    "enterPoints_other": "Enter {{count}} players points",
+    "enterAllPoints": "Enter all {{count}} player points",
+    "enterAllPoints_other": "Enter all {{count}} players points",
+    "addPlayer": "Add",
+    "shareSession": "Share Session",
+    "gameSettings": "Game Settings",
+    "endSession": "End Session",
+    "endSessionConfirm": "End Session?",
+    "endSessionDescription": "This will end \"{{sessionName}}\". All data will be saved.",
+    "shareText": "Join my game \"{{sessionName}}\"!\n\nPasscode: {{passcode}}\n\nOpen Phorm and use the passcode to join the game.",
+    "shareTitle": "Join \"{{sessionName}}\" Game Session",
+    "messages": {
+      "gameAdded": "Game added successfully!",
+      "gameRemoved": "Game removed successfully!",
+      "sessionEnded": "Session ended successfully!",
+      "addPlayerSuccess": "{{playerName}} has been added to the session!",
+      "minPlayersRequired": "At least 2 players are required for a game",
+      "selectMinPlayers": "Please select at least 2 players for the game",
+      "invalidNumber": "Invalid number entered for {{playerName}}: \"{{value}}\"",
+      "autoCalcError": "When auto-calculate is enabled, leave one player's points empty to auto-calculate",
+      "autoCalcPlayersError": "When auto-calculate is enabled, enter points for exactly {{count}} players (leave 1 empty)",
+      "enterAllPlayersPoints": "Please enter points for all selected players or enable auto-calculation",
+      "pointsValidationFailed": "Points validation failed. Please check your inputs.",
+      "addGameFailed": "Failed to add game. Please try again.",
+      "removeGameFailed": "Failed to remove game",
+      "endSessionFailed": "Failed to end session",
+      "addPlayerFailed": "Failed to add player. Please try again.",
+      "passcodeShared": "Game passcode shared successfully!",
+      "passcodeCopied": "Game passcode copied to clipboard!",
+      "sharePasscode": "Share this passcode: {{passcode}}"
+    }
+  },
+  "gameKeypad": {
+    "title": "Enter Points for {{playerName}}",
+    "currentValue": "Current: {{value}}",
+    "clear": "Clear",
+    "backspace": "⌫",
+    "confirm": "Confirm"
+  },
+  "addPlayerModal": {
+    "title": "Add New Player",
+    "description": "Add a player to the current session",
+    "playerName": "Player Name",
+    "playerNamePlaceholder": "Enter player name",
+    "addPlayer": "Add Player",
+    "validation": {
+      "nameRequired": "Please enter a player name",
+      "nameExists": "Player name already exists",
+      "nameTooLong": "Player name is too long"
+    },
+    "messages": {
+      "addPlayerSuccess": "Player added successfully!",
+      "addPlayerFailed": "Failed to add player. Please try again."
+    }
+  },
+  "gameResultsModal": {
+    "title": "Game {{number}} Results",
+    "description": "Points awarded and current standings",
+    "pointsAwarded": "Points Awarded",
+    "currentLeaderboard": "Current Leaderboard",
+    "continueTo": "Continue to Game {{number}}",
+    "autoAdvance": "Auto-advancing in {{seconds}}s..."
+  },
+  "gameSettingsModal": {
+    "title": "Game Settings",
+    "description": "Manage settings for \"{{sessionName}}\"",
+    "currentPasscode": "Current Passcode",
+    "shareHint": "Share this passcode with players to join the game",
+    "newPasscode": "New Passcode",
+    "newPasscodePlaceholder": "Enter 6 digits",
+    "generateRandom": "Generate Random Passcode",
+    "newPasscodeHint": "Enter exactly 6 digits for the new passcode",
+    "updatePasscode": "Update Passcode",
+    "updating": "Updating...",
+    "validation": {
+      "passcodeRequired": "Please enter a new passcode",
+      "passcodeInvalid": "Passcode must be exactly 6 digits",
+      "passcodeSame": "New passcode must be different from current passcode"
+    },
+    "messages": {
+      "passcodeUpdated": "Passcode updated successfully!",
+      "passcodeUpdateFailed": "Failed to update passcode. Please try again.",
+      "passcodeCopied": "Current passcode copied to clipboard!",
+      "passcodeCopyFailed": "Failed to copy passcode"
+    }
+  },
+  "joinGameModal": {
+    "title": "Join Game",
+    "description": "Enter the 6-digit passcode to join an existing game",
+    "passcode": "Game Passcode",
+    "passcodePlaceholder": "Enter 6 digits",
+    "joinGame": "Join Game",
+    "joining": "Joining...",
+    "validation": {
+      "passcodeRequired": "Please enter a passcode",
+      "passcodeInvalid": "Passcode must be exactly 6 digits"
+    },
+    "messages": {
+      "joinSuccess": "Successfully joined the game!",
+      "joinFailed": "Failed to join game. Please check the passcode and try again.",
+      "gameNotFound": "No active game found with this passcode",
+      "alreadyJoined": "You have already joined this game"
+    }
+  },
+  "playerHistoryDrawer": {
+    "title": "Leaderboard & History",
+    "gameByGame": "Game-by-Game Breakdown",
+    "finalStandings": "Final Standings",
+    "gameNumber": "Game {{number}}",
+    "autoCalculated": "(auto-calculated)",
+    "totalPoints": "Total: {{points}} points"
+  },
+  "languageSwitcher": {
+    "language": "Language",
+    "english": "English",
+    "vietnamese": "Tiếng Việt"
+  }
+}

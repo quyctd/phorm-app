@@ -58,12 +58,43 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
     setPlayerNames(updated);
   };
 
+  const handlePlayerKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      const currentValue = (e.target as HTMLInputElement).value.trim();
+      
+      // If current field is not empty, move to next or add new
+      if (currentValue) {
+        // If this is the last input field, add a new one
+        if (index === playerNames.length - 1) {
+          setPlayerNames([...playerNames, ""]);
+          // Focus will be set to the new input after it's rendered
+          setTimeout(() => {
+            const nextInput = document.querySelector(`input[data-player-index="${index + 1}"]`) as HTMLInputElement;
+            if (nextInput) {
+              nextInput.focus();
+            }
+          }, 0);
+        } else {
+          // Move focus to next existing input
+          const nextInput = document.querySelector(`input[data-player-index="${index + 1}"]`) as HTMLInputElement;
+          if (nextInput) {
+            nextInput.focus();
+          }
+        }
+      }
+    }
+  };
+
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSessionName.trim()) return;
 
     // Filter out empty player names and validate
-    const validPlayerNames = playerNames.filter(name => name.trim());
+    const validPlayerNames = playerNames
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
 
     if (validPlayerNames.length < 2) {
       toast.error("Please add at least 2 players");
@@ -173,7 +204,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label className="text-gray-700 font-medium">
-                      Players ({playerNames.filter(name => name.trim()).length} added)
+                      Players ({playerNames.filter(name => name.trim().length > 0).length} added)
                     </Label>
                     <Button
                       type="button"
@@ -188,24 +219,33 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                   </div>
                   <div className="space-y-3">
                     {playerNames.map((name, index) => (
-                      <div key={index.toString()} className="flex items-center gap-3">
-                        <Input
-                          type="text"
-                          value={name}
-                          onChange={(e) => updatePlayerName(index, e.target.value)}
-                          placeholder={`Player ${index + 1} name`}
-                          className="flex-1 border-gray-200 rounded-xl h-12"
-                        />
-                        {playerNames.length > 2 && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => removePlayerField(index)}
-                            className="w-12 h-12 border-gray-200 hover:bg-red-50 hover:border-red-200"
-                          >
-                            <X className="h-4 w-4 text-gray-500" />
-                          </Button>
+                      <div key={index.toString()} className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <Input
+                            type="text"
+                            value={name}
+                            onChange={(e) => updatePlayerName(index, e.target.value)}
+                            onKeyDown={(e) => handlePlayerKeyDown(e, index)}
+                            placeholder={`Player ${index + 1} name`}
+                            className="flex-1 border-gray-200 rounded-xl h-12"
+                            data-player-index={index}
+                          />
+                          {playerNames.length > 2 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => removePlayerField(index)}
+                              className="w-12 h-12 border-gray-200 hover:bg-red-50 hover:border-red-200"
+                            >
+                              <X className="h-4 w-4 text-gray-500" />
+                            </Button>
+                          )}
+                        </div>
+                        {index === 0 && (
+                          <p className="text-xs text-gray-500 ml-1">
+                            💡 Press Enter to move to next player
+                          </p>
                         )}
                       </div>
                     ))}
@@ -333,7 +373,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
                 <Button
                   type="submit"
-                  disabled={!newSessionName.trim() || playerNames.filter(name => name.trim()).length < 2 || (useCustomPasscode && customPasscode.length !== 6)}
+                  disabled={!newSessionName.trim() || playerNames.filter(name => name.trim().length > 0).length < 2 || (useCustomPasscode && customPasscode.length !== 6)}
                   className="w-full bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 hover:from-green-500 hover:via-green-600 hover:to-emerald-600 text-white border-0 transition-all duration-200 h-12 text-base font-medium"
                 >
                   <Plus className="h-5 w-5 mr-2" />
