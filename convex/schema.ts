@@ -11,10 +11,12 @@ const applicationTables = {
     })),
     isActive: v.boolean(),
     endedAt: v.optional(v.number()),
-    isPublic: v.optional(v.boolean()), // For future sharing functionality
-    shareToken: v.optional(v.string()), // For future sharing functionality
+    passcode: v.string(), // 6-digit passcode for joining
+    createdBy: v.optional(v.id("users")), // Track session creator
+    participants: v.optional(v.array(v.id("users"))), // Track who joined the session
   }).index("by_active", ["isActive"])
-    .index("by_share_token", ["shareToken"]),
+    .index("by_passcode", ["passcode"])
+    .index("by_creator", ["createdBy"]),
 
   games: defineTable({
     sessionId: v.id("sessions"),

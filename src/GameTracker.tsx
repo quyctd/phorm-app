@@ -3,11 +3,12 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { Button } from "./components/ui/button";
-import { Plus, Trophy } from "@phosphor-icons/react";
+import { Plus, Trophy, Lock, Play } from "@phosphor-icons/react";
 import { SessionManager } from "./SessionManager";
 import { GameSession } from "./GameSession";
 import { PullToRefresh } from "./components/PullToRefresh";
 import { useConvexRefresh } from "./hooks/useConvexRefresh";
+import { JoinGameModal } from "./components/JoinGameModal";
 import { toast } from "sonner";
 
 // Skeleton component for loading states
@@ -23,35 +24,24 @@ type SessionView = "history" | "new-session";
 export function GameTracker() {
   const [currentState, setCurrentState] = useState<AppState>("home");
   const [sessionView, setSessionView] = useState<SessionView>("history");
-  const activeSession = useQuery(api.sessions.getActive);
-  const joinSession = useMutation(api.sessions.join);
+  const [activeSessionId, setActiveSessionId] = useState<Id<"sessions"> | null>(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  
+  const activeSessions = useQuery(api.sessions.listActive);
   const { refreshData } = useConvexRefresh();
 
   // Loading states
-  const isLoadingSession = activeSession === undefined;
+  const isLoadingSession = activeSessions === undefined;
 
-  // Handle shared session links
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session');
+  const handleJoinSuccess = (sessionId: Id<"sessions">) => {
+    setActiveSessionId(sessionId);
+    setCurrentState("game");
+  };
 
-    if (sessionId && !activeSession && !isLoadingSession) {
-      // Try to join the shared session
-      joinSession({ sessionId: sessionId as Id<"sessions"> })
-        .then(() => {
-          toast.success("Joined shared session!");
-          setCurrentState("game");
-          // Clean up URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-        })
-        .catch((error) => {
-          console.error("Failed to join session:", error);
-          toast.error("Failed to join session. It may have ended or doesn't exist.");
-          // Clean up URL even on error
-          window.history.replaceState({}, document.title, window.location.pathname);
-        });
-    }
-  }, [activeSession, isLoadingSession, joinSession]);
+  const handlePlaySession = (sessionId: Id<"sessions">) => {
+    setActiveSessionId(sessionId);
+    setCurrentState("game");
+  };
 
   const handleStartNewSession = () => {
     setSessionView("new-session");
@@ -63,16 +53,25 @@ export function GameTracker() {
     setCurrentState("sessions");
   };
 
-  // Show game session if we have an active session and user navigates to game
-  if (currentState === "game") {
-    return <GameSession onBack={() => setCurrentState("home")} />;
+  // Show game session if we have a selected session and user navigates to game
+  if (currentState === "game" && activeSessionId) {
+    return <GameSession 
+      sessionId={activeSessionId}
+      onBack={() => {
+        setCurrentState("home");
+        setActiveSessionId(null);
+      }} 
+    />;
   }
 
   // Show session management
   if (currentState === "sessions") {
     return <SessionManager
       onBack={() => setCurrentState("home")}
-      onNavigateToGame={() => setCurrentState("game")}
+      onNavigateToGame={(sessionId) => {
+        setActiveSessionId(sessionId);
+        setCurrentState("game");
+      }}
       initialView={sessionView}
     />;
   }
@@ -102,15 +101,22 @@ export function GameTracker() {
                 <Skeleton className="h-4 w-16" />
                 <Skeleton className="h-3 w-20" />
               </div>
-            ) : activeSession && (
+            ) : activeSessions && activeSessions.length > 0 ? (
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">Active Session</p>
-                <p className="text-xs text-gray-500">Game in Progress</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {activeSessions.length} Active Game{activeSessions.length !== 1 ? 's' : ''}
+                </p>
+                <p className="text-xs text-gray-500">Ready to play</p>
+              </div>
+            ) : (
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">No Active Games</p>
+                <p className="text-xs text-gray-500">Create or join a game</p>
               </div>
             )}
           </div>
 
-          {/* Status Banner */}
+          {/* Active Sessions */}
           {isLoadingSession ? (
             <div className="bg-gray-100 rounded-xl p-4">
               <div className="flex items-center justify-between">
@@ -121,25 +127,39 @@ export function GameTracker() {
                 <Skeleton className="h-9 w-20" />
               </div>
             </div>
-          ) : activeSession ? (
-            <div className="bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{activeSession.name}</p>
-                  <p className="text-sm opacity-90">{activeSession.players?.length || 0} players • Game in progress</p>
+          ) : activeSessions && activeSessions.length > 0 ? (
+            <div className="space-y-3">
+              {activeSessions.slice(0, 2).map((session) => (
+                <div key={session._id} className="bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 rounded-xl p-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">{session.name}</p>
+                      <p className="text-sm opacity-90">
+                        {session.players?.length || 0} players • Passcode: {session.passcode}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => handlePlaySession(session._id)}
+                      className="bg-white text-green-600 hover:bg-gray-50 font-medium px-4 py-2 border-0"
+                    >
+                      <Play className="h-4 w-4 mr-1" />
+                      Play
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  onClick={() => setCurrentState("game")}
-                  className="bg-white text-green-600 hover:bg-gray-50 font-medium px-4 py-2 border-0"
-                >
-                  Continue
-                </Button>
-              </div>
+              ))}
+              {activeSessions.length > 2 && (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    +{activeSessions.length - 2} more active game{activeSessions.length - 2 !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 rounded-xl p-4 text-white">
               <p className="font-semibold">Ready to start a new game!</p>
-              <p className="text-sm opacity-90">Create a session with your players</p>
+              <p className="text-sm opacity-90">Create a session with your players or join an existing one</p>
             </div>
           )}
         </div>
@@ -171,7 +191,7 @@ export function GameTracker() {
             <div className="grid grid-cols-1 gap-4">
               {/* Start New Session */}
               {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-              {!activeSession && (<div
+              <div
                 onClick={handleStartNewSession}
                 className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-gray-200 hover:border-green-300 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
               >
@@ -185,7 +205,25 @@ export function GameTracker() {
                     Create a new game session with your players
                   </p>
                 </div>
-              </div>)}
+              </div>
+
+              {/* Join Game */}
+              {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+              <div
+                onClick={() => setShowJoinModal(true)}
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-gray-200 hover:border-purple-300 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-indigo-500/20 group-hover:from-purple-400/30 group-hover:to-indigo-500/30 transition-all duration-200" />
+                <div className="relative">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 via-purple-500 to-indigo-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+                    <Lock className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2">Join Game</h3>
+                  <p className="text-gray-600 text-sm">
+                    Enter a 6-digit passcode to join an existing game
+                  </p>
+                </div>
+              </div>
 
               {/* View History */}
               {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
@@ -208,6 +246,13 @@ export function GameTracker() {
           </div>
         )}
       </div>
+
+      {/* Join Game Modal */}
+      <JoinGameModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onSuccess={handleJoinSuccess}
+      />
     </PullToRefresh>
   );
 }

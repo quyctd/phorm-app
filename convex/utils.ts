@@ -1,15 +1,18 @@
 import { v } from "convex/values";
 
 /**
- * Generate a random share token for session sharing
+ * Generate a 6-digit passcode for session joining
  */
-export function generateShareToken(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+export function generatePasscode(): string {
+  // Generate a 6-digit number (100000 to 999999)
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+/**
+ * Validate passcode format (6 digits)
+ */
+export function isValidPasscode(passcode: string): boolean {
+  return /^\d{6}$/.test(passcode);
 }
 
 /**
@@ -23,7 +26,7 @@ export function generatePlayerId(): string {
  * Check if user has permission to perform action on session
  */
 export function hasPermission(
-  session: any,
+  session: { ownerId?: string; permissions?: Record<string, string> },
   userId: string | null,
   requiredPermission: "view" | "edit" | "admin"
 ): boolean {

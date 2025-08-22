@@ -9,12 +9,12 @@ import { Label } from "./components/ui/label";
 import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
 import { PullToRefresh } from "./components/PullToRefresh";
 import { useConvexRefresh } from "./hooks/useConvexRefresh";
-import { ArrowLeft, Play, Plus, Trophy, Eye, ClockCounterClockwise, X, UserPlus, Share } from "@phosphor-icons/react";
+import { ArrowLeft, Play, Plus, Trophy, Eye, ClockCounterClockwise, X, UserPlus, Share, Lock, Shuffle, Copy } from "@phosphor-icons/react";
 import type { Id } from "../convex/_generated/dataModel";
 
 interface SessionManagerProps {
   onBack: () => void;
-  onNavigateToGame?: () => void;
+  onNavigateToGame?: (sessionId: Id<"sessions">) => void;
   initialView?: "history" | "new-session";
 }
 
@@ -32,11 +32,12 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
   const [newSessionName, setNewSessionName] = useState(initialView === "new-session" ? generateSessionName() : "");
   const [playerNames, setPlayerNames] = useState<string[]>(["", ""]);
+  const [customPasscode, setCustomPasscode] = useState("");
+  const [useCustomPasscode, setUseCustomPasscode] = useState(false);
   const [showNewSession, setShowNewSession] = useState(initialView === "new-session");
-  const [isPublic, setIsPublic] = useState(false);
 
   const sessions = useQuery(api.sessions.list) || [];
-  const activeSession = useQuery(api.sessions.getActive);
+  const activeSessions = useQuery(api.sessions.listActive) || [];
   const { refreshData } = useConvexRefresh();
 
   const createSession = useMutation(api.sessions.create);
@@ -69,25 +70,47 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
       return;
     }
 
+    // Validate custom passcode if provided
+    if (useCustomPasscode) {
+      if (!customPasscode.trim()) {
+        toast.error("Please enter a passcode or disable custom passcode");
+        return;
+      }
+      if (!/^\d{6}$/.test(customPasscode.trim())) {
+        toast.error("Passcode must be exactly 6 digits");
+        return;
+      }
+    }
+
     try {
-      await createSession({
+      const sessionId = await createSession({
         name: newSessionName.trim(),
         playerNames: validPlayerNames,
-        isPublic,
+        passcode: useCustomPasscode ? customPasscode.trim() : undefined,
       });
       setNewSessionName("");
       setPlayerNames(["", ""]);
-      setIsPublic(false);
+      setCustomPasscode("");
+      setUseCustomPasscode(false);
       setShowNewSession(false);
       toast.success("Session started successfully");
-    } catch {
-      toast.error("Failed to create session");
+      
+      // Navigate to the game with the new session ID
+      if (onNavigateToGame) {
+        onNavigateToGame(sessionId);
+      }
+    } catch (error) {
+      console.error("Error creating session:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create session";
+      toast.error(errorMessage);
     }
   };
 
   const handleQuickStart = () => {
     setPlayerNames(["Player 1", "Player 2"]);
     setNewSessionName(`Game ${new Date().toLocaleDateString()}`);
+    setCustomPasscode("");
+    setUseCustomPasscode(false);
     setShowNewSession(true);
   };
 
@@ -122,26 +145,6 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
               </div>
             </div>
           </div>
-
-          {/* Status Banner */}
-          {activeSession && (
-            <div className="mt-4 bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 rounded-xl p-4 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{activeSession.name}</p>
-                  <p className="text-sm opacity-90">{activeSession.players?.length || 0} players • Game in progress</p>
-                </div>
-                {onNavigateToGame && (
-                  <Button
-                    onClick={onNavigateToGame}
-                    className="bg-white text-green-600 hover:bg-gray-50 font-medium px-4 py-2 border-0"
-                  >
-                    Continue
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -209,33 +212,128 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Label className="text-gray-700 font-medium">
-                    Session Settings
-                  </Label>
-                  <div className="flex items-center gap-3 p-4 rounded-xl border border-gray-200">
-                    <input
-                      type="checkbox"
-                      id="isPublic"
-                      checked={isPublic}
-                      onChange={(e) => setIsPublic(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <div className="flex-1">
-                      <label htmlFor="isPublic" className="font-medium text-gray-900 cursor-pointer">
-                        Allow sharing
-                      </label>
-                      <p className="text-sm text-gray-500">
-                        Generate a shareable link to allow others to manage the game points.
-                      </p>
+                {/* Passcode Section */}
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <Label className="text-gray-700 font-medium">
+                      Game Passcode
+                    </Label>
+                    
+                    {/* Passcode Options */}
+                    <div className="space-y-3">
+                      {/* Auto-generate Option */}
+                      <button
+                        type="button"
+                        className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all w-full text-left ${
+                          !useCustomPasscode 
+                            ? "border-blue-300 bg-blue-50/50" 
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                        onClick={() => {
+                          setUseCustomPasscode(false);
+                          setCustomPasscode("");
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            !useCustomPasscode 
+                              ? "border-blue-500 bg-blue-500" 
+                              : "border-gray-300"
+                          }`}>
+                            {!useCustomPasscode && (
+                              <div className="w-2 h-2 bg-white rounded-full" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Lock className="h-4 w-4 text-blue-600" />
+                              <span className="font-medium text-gray-900">Auto-generate</span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              A random 6-digit passcode will be created automatically
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* Custom Option */}
+                      <button
+                        type="button"
+                        className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all w-full text-left ${
+                          useCustomPasscode 
+                            ? "border-purple-300 bg-purple-50/50" 
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                        onClick={() => setUseCustomPasscode(true)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            useCustomPasscode 
+                              ? "border-purple-500 bg-purple-500" 
+                              : "border-gray-300"
+                          }`}>
+                            {useCustomPasscode && (
+                              <div className="w-2 h-2 bg-white rounded-full" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Plus className="h-4 w-4 text-purple-600" />
+                              <span className="font-medium text-gray-900">Custom passcode</span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              Set your own memorable 6-digit passcode
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Custom Passcode Input */}
+                        {useCustomPasscode && (
+                          <div className="mt-4 pt-4 border-t border-purple-200 animate-fade-in"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex gap-3">
+                              <Input
+                                type="text"
+                                value={customPasscode}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                  setCustomPasscode(value);
+                                }}
+                                placeholder="123456"
+                                className="flex-1 border-purple-200 rounded-lg h-11 font-mono text-lg tracking-wider text-center focus:border-purple-400 focus:ring-purple-400"
+                                maxLength={6}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                  const randomPasscode = Math.floor(100000 + Math.random() * 900000).toString();
+                                  setCustomPasscode(randomPasscode);
+                                }}
+                                className="w-11 h-11 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
+                                title="Generate random passcode"
+                              >
+                                <Shuffle className="h-4 w-4 text-purple-600" />
+                              </Button>
+                            </div>
+                            {customPasscode.length > 0 && customPasscode.length < 6 && (
+                              <p className="text-xs text-purple-600 mt-2">
+                                Enter {6 - customPasscode.length} more digit{6 - customPasscode.length !== 1 ? 's' : ''}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </button>
                     </div>
-                    <Share className="h-5 w-5 text-gray-400" />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={!newSessionName.trim() || playerNames.filter(name => name.trim()).length < 2}
+                  disabled={!newSessionName.trim() || playerNames.filter(name => name.trim()).length < 2 || (useCustomPasscode && customPasscode.length !== 6)}
                   className="w-full bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 hover:from-green-500 hover:via-green-600 hover:to-emerald-600 text-white border-0 transition-all duration-200 h-12 text-base font-medium"
                 >
                   <Plus className="h-5 w-5 mr-2" />
@@ -247,7 +345,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
         )}
 
         {/* Quick Start */}
-      {!activeSession && !showNewSession && (
+      {!showNewSession && (
         <Card className="app-card border-0 animate-slide-in">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl flex items-center gap-3">

@@ -1,27 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import { Button } from "./ui/button";
 import { Backspace, Check } from "@phosphor-icons/react";
 
 interface GameKeypadProps {
-  isOpen: boolean;
   playerName: string;
   initialValue?: string;
-  onClose: () => void;
   onConfirm: (value: string) => void;
 }
 
-export function GameKeypad({
-  isOpen,
+export const GameKeypad = NiceModal.create(({
   playerName,
   initialValue = "",
-  onClose,
   onConfirm,
-}: GameKeypadProps) {
+}: GameKeypadProps) => {
+  const modal = useModal();
   const [keypadValue, setKeypadValue] = useState(() => {
     // Remove the minus sign for keypad value and track it separately
     return initialValue.startsWith("-") ? initialValue.slice(1) : initialValue;
   });
-  const [isNegative, setIsNegative] = useState(() => initialValue.startsWith("-"));
+  const [isNegative, setIsNegative] = useState(() => {
+    // Default to negative if no initial value, otherwise preserve the sign
+    return initialValue === "" ? true : initialValue.startsWith("-");
+  });
+
+  // Reset values when modal is shown again
+  useEffect(() => {
+    if (modal.visible) {
+      setKeypadValue(initialValue.startsWith("-") ? initialValue.slice(1) : initialValue);
+      setIsNegative(initialValue === "" ? true : initialValue.startsWith("-"));
+    }
+  }, [modal.visible, initialValue]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (modal.visible) {
+      // Save original overflow style
+      const originalOverflow = document.body.style.overflow;
+      // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Restore original overflow when modal closes
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [modal.visible]);
 
   const handleKeypadNumber = (num: string) => {
     setKeypadValue(prev => prev + num);
@@ -38,27 +62,33 @@ export function GameKeypad({
   const handleKeypadConfirm = () => {
     const finalValue = keypadValue === "" ? "" : (isNegative ? "-" : "") + keypadValue;
     onConfirm(finalValue);
-    onClose();
+    modal.hide();
   };
 
   const handleClose = () => {
-    onClose();
+    // Reset to initial values when closing without confirming
+    setKeypadValue(initialValue.startsWith("-") ? initialValue.slice(1) : initialValue);
+    setIsNegative(initialValue === "" ? true : initialValue.startsWith("-"));
+    modal.hide();
   };
 
   const displayValue = keypadValue === "" ? "0" : (isNegative ? "-" : "") + keypadValue;
 
-  if (!isOpen) return null;
+  // Don't render if modal is not visible
+  if (!modal.visible) return null;
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Modal backdrop for closing
     <div
       className="fixed inset-0 bg-black/50 flex items-end justify-center z-50"
       onClick={handleClose}
+      style={{ touchAction: 'none' }}
     >
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: Modal content container */}
       <div
-        className="bg-white w-full rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300"
+        className="bg-white w-full rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
+        style={{ touchAction: 'auto' }}
       >
         {/* Display */}
         <div className="mb-6">
@@ -142,4 +172,4 @@ export function GameKeypad({
       </div>
     </div>
   );
-}
+});

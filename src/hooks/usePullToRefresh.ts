@@ -65,21 +65,21 @@ export function usePullToRefresh({
       return;
     }
 
-    // Prevent default scrolling when pulling
-    e.preventDefault();
+    // Prevent default scrolling when pulling (only if cancelable)
+    if (e.cancelable) {
+      e.preventDefault();
+    }
 
     // Make initial pull more responsive, then add resistance
     const adjustedDeltaY = deltaY < 30 ? deltaY * 1.2 : deltaY;
     const pullDistance = Math.min(adjustedDeltaY / resistance, threshold * 1.5);
     const canRefresh = pullDistance >= threshold;
 
-    // Trigger haptic feedback when threshold is reached for the first time
+    // Track when threshold is reached for the first time (for potential future haptic feedback)
     if (canRefresh && !hasTriggeredHaptic.current) {
       hasTriggeredHaptic.current = true;
-      // Trigger haptic feedback if available
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50); // Short vibration
-      }
+      // Note: Vibration API removed to prevent browser intervention warnings
+      // Modern browsers require explicit user gesture before allowing vibration
     }
 
     setState(prev => ({
@@ -122,9 +122,13 @@ export function usePullToRefresh({
     const container = containerRef.current;
     if (!container || !enabled) return;
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    // Use passive listeners to avoid intervention warnings
+    const touchMoveOptions = { passive: false, capture: false };
+    const passiveOptions = { passive: true };
+
+    container.addEventListener('touchstart', handleTouchStart, passiveOptions);
+    container.addEventListener('touchmove', handleTouchMove, touchMoveOptions);
+    container.addEventListener('touchend', handleTouchEnd, passiveOptions);
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
