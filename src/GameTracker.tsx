@@ -61,27 +61,26 @@ export function GameTracker() {
   // Home screen - main dashboard
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
+      className="min-h-screen bg-background"
     >
       {/* Header */}
-      <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
-        <div className="relative px-6 py-8">
+      <div className="bg-card border-b mb-6">
+        <div className="px-6 py-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-white" />
+              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{t('app.title')}</h1>
-                <p className="text-sm text-gray-600">{t('app.subtitle')}</p>
+                <h1 className="text-2xl font-bold text-foreground">{t('app.title')}</h1>
+                <p className="text-sm text-muted-foreground">{t('app.subtitle')}</p>
               </div>
             </div>
             <LanguageSwitcher />
           </div>
 
           {/* Welcome Message */}
-          <div className="bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 rounded-xl p-4 text-white">
+          <div className="bg-primary rounded-xl p-4 text-primary-foreground">
             <p className="font-semibold">{t('home.readyToStart')}</p>
             <p className="text-sm opacity-90">{t('home.createSession')}</p>
           </div>
@@ -92,23 +91,24 @@ export function GameTracker() {
       <div className="px-6 pb-8">
         {/* Quick Actions Grid */}
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('home.quickActions')}</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">{t('home.quickActions')}</h2>
             <div className="grid grid-cols-1 gap-4">
               {/* Start New Session */}
               {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
               <div
                 onClick={handleStartNewSession}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-gray-200 hover:border-green-300 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                className="bg-card rounded-lg p-6 border hover:bg-accent transition-colors cursor-pointer"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-emerald-500/20 group-hover:from-green-400/30 group-hover:to-emerald-500/30 transition-all duration-200" />
-                <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 via-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                    <Plus className="h-6 w-6 text-white" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                    <Plus className="h-6 w-6 text-primary-foreground" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-lg mb-2">{t('home.newGame.title')}</h3>
-                  <p className="text-gray-600 text-sm">
-                    {t('home.newGame.description')}
-                  </p>
+                  <div>
+                    <h3 className="font-semibold text-foreground text-lg">{t('home.newGame.title')}</h3>
+                    <p className="text-muted-foreground text-sm">
+                      {t('home.newGame.description')}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -116,17 +116,18 @@ export function GameTracker() {
               {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
               <div
                 onClick={() => setShowJoinModal(true)}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-gray-200 hover:border-purple-300 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                className="bg-card rounded-lg p-6 border hover:bg-accent transition-colors cursor-pointer"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-indigo-500/20 group-hover:from-purple-400/30 group-hover:to-indigo-500/30 transition-all duration-200" />
-                <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 via-purple-500 to-indigo-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                    <Lock className="h-6 w-6 text-white" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center">
+                    <Lock className="h-6 w-6 text-secondary-foreground" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-lg mb-2">{t('home.joinGame.title')}</h3>
-                  <p className="text-gray-600 text-sm">
-                    {t('home.joinGame.description')}
-                  </p>
+                  <div>
+                    <h3 className="font-semibold text-foreground text-lg">{t('home.joinGame.title')}</h3>
+                    <p className="text-muted-foreground text-sm">
+                      {t('home.joinGame.description')}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -134,17 +135,18 @@ export function GameTracker() {
               {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
               <div
                 onClick={handleViewSessionHistory}
-                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-gray-200 hover:border-blue-300 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                className="bg-card rounded-lg p-6 border hover:bg-accent transition-colors cursor-pointer"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-500/20 group-hover:from-blue-400/30 group-hover:to-purple-500/30 transition-all duration-200" />
-                <div className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                    <Trophy className="h-6 w-6 text-white" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                    <Trophy className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-lg mb-2">{t('home.history.title')}</h3>
-                  <p className="text-gray-600 text-sm">
-                    {t('home.history.description')}
-                  </p>
+                  <div>
+                    <h3 className="font-semibold text-foreground text-lg">{t('home.history.title')}</h3>
+                    <p className="text-muted-foreground text-sm">
+                      {t('home.history.description')}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

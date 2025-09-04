@@ -37,7 +37,6 @@ export function JoinGameModal({ isOpen, onClose, onSuccess }: JoinGameModalProps
     setIsJoining(true);
     try {
       const session = await joinByPasscode({ passcode });
-      toast.success(t('joinGameModal.messages.joinSuccess'));
       onSuccess(session._id);
       onClose();
       setPasscode("");

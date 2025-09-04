@@ -7,7 +7,7 @@ import NiceModal from "@ebay/nice-modal-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
-import { Label } from "./components/ui/label";
+import { Avatar } from "./components/ui/avatar";
 import { useConvexRefresh } from "./hooks/useConvexRefresh";
 import {
   DropdownMenu,
@@ -72,16 +72,6 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
     [allPlayers, selectedPlayerIds]
   );
 
-  // Generate avatar initials and colors
-  const getPlayerAvatar = (name: string) => {
-    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500',
-      'bg-indigo-500', 'bg-yellow-500', 'bg-red-500', 'bg-teal-500'
-    ];
-    const colorIndex = name.length % colors.length;
-    return { initials, color: colors[colorIndex] };
-  };
 
   // Get player's game history
   const getPlayerGameHistory = (playerId: string) => {
@@ -397,50 +387,48 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
 
   if (!activeSession) {
     return (
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6">
         {/* Modern Header - No Session */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 p-6 shadow-sm border border-gray-100">
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-500/5 to-slate-500/5" />
-          <div className="relative flex items-center gap-4">
+        <div className="bg-card border-b p-6">
+          <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={onBack} 
-              className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all hover:scale-105"
             >
-              <ArrowLeft className="h-5 w-5 text-gray-700" />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-500 to-slate-600 flex items-center justify-center">
-                  <Target className="h-4 w-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                  <Target className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Game Session</h1>
+                <h1 className="text-2xl font-bold text-foreground">Game Session</h1>
               </div>
-              <p className="text-gray-600 text-base font-medium">
+              <p className="text-muted-foreground text-base">
                 No active session found
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2">
-              <div className="px-3 py-1 rounded-full bg-white/60 backdrop-blur-sm">
-                <span className="text-sm font-medium text-gray-700">Inactive</span>
+              <div className="px-3 py-1 rounded-full bg-muted">
+                <span className="text-sm font-medium text-muted-foreground">Inactive</span>
               </div>
             </div>
           </div>
         </div>
 
-        <Card className="app-card border-2 border-dashed border-gray-200 bg-gray-50">
+        <Card className="border-2 border-dashed bg-muted/50">
           <CardContent className="text-center p-8 space-y-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mx-auto">
-              <Target className="h-8 w-8 text-gray-500" />
+            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto">
+              <Target className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="space-y-2">
-              <h3 className="font-semibold text-gray-900 text-xl">No Active Session</h3>
-              <p className="text-gray-600 text-base">
+              <h3 className="font-semibold text-foreground text-xl">No Active Session</h3>
+              <p className="text-muted-foreground text-base">
                 Start a new session to begin tracking points
               </p>
             </div>
-            <Button onClick={onBack} className="w-full app-button-secondary h-12 text-base font-medium">
+            <Button onClick={onBack} className="w-full">
               <Play className="h-5 w-5 mr-2" />
               Start New Session
             </Button>
@@ -453,40 +441,38 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   return (
     <>
       {/* Header */}
-      <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6 animate-fade-in">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
-        <div className="relative px-6 py-6">
+      <div className="bg-card border-b mb-6">
+        <div className="px-6 py-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={onBack}
-                className="w-10 h-10 rounded-xl hover:bg-white/50 transition-colors"
               >
-                <ArrowLeft className="h-5 w-5 text-gray-700" />
+                <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-3">
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">{activeSession?.name || "Loading..."}</h1>
-                  <p className="text-sm text-gray-600">Game Session</p>
+                  <h1 className="text-xl font-bold text-foreground">{activeSession?.name || "Loading..."}</h1>
+                  <p className="text-sm text-muted-foreground">Game Session</p>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 text-white px-3 py-1 rounded-lg text-sm font-medium transition-all duration-300 ease-in-out">
+              <div className="bg-primary text-primary-foreground px-3 py-1 rounded-lg text-sm font-medium">
                 Game {games.length + 1}
               </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="w-10 h-10 rounded-xl border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors">
-                    <DotsThreeVertical className="h-5 w-5 text-gray-600" />
+                  <Button variant="outline" size="icon">
+                    <DotsThreeVertical className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem onClick={() => void handleShare()} className="cursor-pointer">
-                    <ShareNetwork className="h-4 w-4 mr-2 text-green-600" />
+                    <ShareNetwork className="h-4 w-4 mr-2" />
                     Share Session
                   </DropdownMenuItem>
                   <DropdownMenuItem 
@@ -501,7 +487,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                     }} 
                     className="cursor-pointer"
                   >
-                    <Gear className="h-4 w-4 mr-2 text-blue-600" />
+                    <Gear className="h-4 w-4 mr-2" />
                     Game Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -510,7 +496,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                       // We'll trigger the alert dialog programmatically
                       document.getElementById('end-session-trigger')?.click();
                     }}
-                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    className="cursor-pointer text-destructive focus:text-destructive"
                   >
                     <Pause className="h-4 w-4 mr-2" />
                     End Session
@@ -547,20 +533,20 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 pb-8 animate-fade-in">
+      <div className="px-6 pb-8">
                 {/* Current Leaderboard Section - Only show when there are games */}
         {games.length > 0 && (
-          <div className="mb-6 animate-fade-in">
+          <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 rounded-lg flex items-center justify-center">
-                  <Trophy className="h-4 w-4 text-white" />
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Trophy className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">Current Standings</h2>
+                <h2 className="text-lg font-semibold text-foreground">Current Standings</h2>
               </div>
               <PlayerHistoryDrawer
                 trigger={
-                  <Button variant="outline" size="sm" className="border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-colors text-xs">
+                  <Button variant="outline" size="sm" className="text-xs">
                     <Trophy className="h-3 w-3 mr-1" />
                     Details
                   </Button>
@@ -573,10 +559,9 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 showRemoveButtons={true}
               />
             </div>
-            <div className="bg-white rounded-2xl p-4 border border-gray-200">
+            <div className="bg-card rounded-lg p-4 border">
               <div className="space-y-3">
                 {finalResults.slice(0, 5).map((result, index) => {
-                  const avatar = getPlayerAvatar(result.player.name);
                   const isTopThree = index < 3;
                   
                   // Special styling for top 3
@@ -584,29 +569,29 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                     switch (index) {
                       case 0: // 1st place - Gold
                         return {
-                          container: "bg-gradient-to-r from-yellow-50 via-amber-50 to-yellow-100 border-2 border-yellow-300 shadow-md transform scale-[1.02]",
-                          badge: "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-lg",
+                          container: "bg-primary/10 border-2 border-primary",
+                          badge: "bg-primary text-primary-foreground",
                           icon: <CrownSimple className="h-4 w-4" weight="fill" />,
-                          nameColor: "text-yellow-900 font-bold",
-                          pointsColor: "text-yellow-700 font-extrabold",
+                          nameColor: "text-foreground font-bold",
+                          pointsColor: "text-foreground font-extrabold",
                           status: "🏆 Champion"
                         };
                       case 1: // 2nd place - Silver  
                         return {
-                          container: "bg-gradient-to-r from-gray-50 via-slate-50 to-gray-100 border-2 border-gray-300 shadow-sm",
-                          badge: "bg-gradient-to-br from-gray-400 to-gray-600 text-white shadow-md",
+                          container: "bg-secondary/10 border-2 border-secondary",
+                          badge: "bg-secondary text-secondary-foreground",
                           icon: <Medal className="h-4 w-4" weight="fill" />,
-                          nameColor: "text-gray-900 font-semibold",
-                          pointsColor: "text-gray-700 font-bold",
+                          nameColor: "text-foreground font-semibold",
+                          pointsColor: "text-foreground font-bold",
                           status: `${Math.abs(result.total - finalResults[0].total)} behind`
                         };
                       default: // 4th, 5th place
                         return {
-                          container: "bg-gray-50 border border-gray-100",
-                          badge: "bg-gray-200 text-gray-600",
+                          container: "bg-muted/50 border border-border",
+                          badge: "bg-muted text-muted-foreground",
                           icon: null,
-                          nameColor: "text-gray-900",
-                          pointsColor: "text-gray-700",
+                          nameColor: "text-foreground",
+                          pointsColor: "text-foreground",
                           status: `${Math.abs(result.total - finalResults[0].total)} behind leader`
                         };
                     }
@@ -623,15 +608,17 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${styling.badge} ${isTopThree ? 'shadow-lg' : ''}`}>
                           {styling.icon || (index + 1)}
                         </div>
-                        <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color} ${isTopThree ? 'shadow-md' : ''}`}>
-                          {avatar.initials}
-                        </div>
+                        <Avatar 
+                          name={result.player.name} 
+                          size="lg"
+                          className={isTopThree ? 'shadow-md' : ''}
+                        />
                       </div>
                       <div className="flex-1">
                         <div className={styling.nameColor}>
                           {result.player.name}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {styling.status}
                         </div>
                       </div>
@@ -643,7 +630,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 })}
                 {finalResults.length > 5 && (
                   <div className="text-center pt-2">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       +{finalResults.length - 5} more player{finalResults.length - 5 !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -654,13 +641,13 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
         )}
 
         {/* Compact Player Selection */}
-        <div className="mb-4 animate-slide-in">
-          <div className="bg-white rounded-xl p-3 border border-gray-200">
+        <div className="mb-4">
+          <div className="bg-card rounded-lg p-3 border">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-900">Players</span>
-                <Badge className="text-xs bg-gray-100 text-gray-600">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Players</span>
+                <Badge variant="secondary" className="text-xs">
               {selectedPlayers.length}/{allPlayers.length}
             </Badge>
           </div>
@@ -668,7 +655,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 variant="ghost"
                 size="sm"
                 onClick={openAddPlayerModal}
-                className="h-7 px-2 text-xs text-blue-600 hover:bg-blue-50"
+                className="h-7 px-2 text-xs"
               >
                 <UserPlus className="h-3 w-3 mr-1" />
                 Add
@@ -678,7 +665,6 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
             {/* Compact horizontal scrollable player list */}
             <div className="flex gap-2 overflow-x-auto pb-1 flex-wrap">
             {allPlayers.map((player) => {
-              const avatar = getPlayerAvatar(player.name);
               const isSelected = selectedPlayerIds.includes(player.id);
               return (
                 <button
@@ -686,8 +672,8 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                   type="button"
                   className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
                     isSelected
-                      ? "bg-blue-50 border-blue-300"
-                      : "hover:bg-gray-50 border-gray-200"
+                      ? "bg-accent border-primary"
+                      : "hover:bg-accent border-border"
                   }`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -695,13 +681,12 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                     togglePlayerSelection(player.id);
                   }}
                 >
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs ${avatar.color} ${
-                      isSelected ? "ring-1 ring-blue-400" : ""
-                  }`}>
-                    {avatar.initials}
-                  </div>
+                    <Avatar 
+                      name={player.name} 
+                      size="sm"
+                    />
                     <span className={`text-xs font-medium whitespace-nowrap ${
-                    isSelected ? "text-blue-600" : "text-gray-600"
+                    isSelected ? "text-primary" : "text-muted-foreground"
                   }`}>
                     {player.name}
                   </span>
@@ -712,28 +697,28 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
         </div>
 
         {/* Point Entry Section */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 mt-4 animate-fade-in">
+        <div className="bg-card rounded-lg p-6 border mt-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-400 via-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                <Target className="h-4 w-4 text-white" />
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Target className="h-4 w-4 text-primary-foreground" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900 transition-all duration-300 ease-in-out">
+              <h2 className="text-lg font-semibold text-foreground">
                 {isAddingGame ? (
-                  <span className="text-emerald-600">Saving Game {games.length + 1}...</span>
+                  <span className="text-primary">Saving Game {games.length + 1}...</span>
                 ) : (
                   `Game ${games.length + 1} Points`
                 )}
               </h2>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">Auto-calc</span>
+              <span className="text-xs text-muted-foreground">Auto-calc</span>
               <input
                 type="checkbox"
                 checked={autoCalculate}
                 onChange={(e) => setAutoCalculate(e.target.checked)}
                 disabled={isAddingGame}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-4 h-4 rounded border-input text-primary focus:ring-primary focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   width: '16px',
                   height: '16px',
@@ -746,7 +731,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
             </div>
           </div>
           {autoCalculate && (
-            <p className="text-xs text-gray-600 mb-4">
+            <p className="text-xs text-muted-foreground mb-4">
               💡 Leave one player empty to auto-calculate
             </p>
           )}
@@ -763,25 +748,22 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                     variant="outline"
                     onClick={() => openKeypad(player.id)}
                     disabled={isAddingGame}
-                    className={`
-                      h-16 p-3 border-2 border-dashed transition-all duration-200 group border-blue-400 bg-blue-50/50 hover:bg-blue-100 hover:border-blue-500
-                      active:scale-[0.98] transform
-                      disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-                    `}
+                    className="h-16 p-3 border-2 border-dashed border-primary bg-primary/5 hover:bg-primary/10 hover:border-primary active:scale-[0.98] transform disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     <div className="flex items-center justify-between w-full">
                       {/* Player avatar - left side */}
                       <div className="flex items-center gap-2 mr-2">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs ${getPlayerAvatar(player.name).color}`}>
-                          {getPlayerAvatar(player.name).initials}
-                        </div>
+                        <Avatar 
+                          name={player.name} 
+                          size="sm"
+                        />
                       </div>
                       {/* Player name - left side */}
                       <div className="flex-1 text-left">
-                        <div className="font-medium text-sm text-gray-900 truncate">
+                        <div className="font-medium text-sm text-foreground truncate">
                           {player.name}
                 </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           tap to enter
                         </div>
                       </div>
@@ -790,13 +772,13 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                       <div className="flex flex-col items-end">
                         <div className={`
                           text-xl font-bold 
-                          ${isAutoValue ? "text-blue-600" : "text-blue-700"}
+                          ${isAutoValue ? "text-primary" : "text-primary"}
                           group-hover:scale-110 transition-transform
                         `}>
                           {isAutoValue ? "auto" : pointValue}
                         </div>
                         {!isAutoValue && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             points
                           </div>
                         )}
@@ -810,14 +792,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
             <Button
               type="submit"
               disabled={isAddingGame || !hasEnoughPointsInputted}
-              className={`
-                w-full border-0 transition-all duration-200 
-                ${hasEnoughPointsInputted && !isAddingGame
-                  ? "bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 hover:from-green-500 hover:via-green-600 hover:to-emerald-600 text-white"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed
-              `}
+              className="w-full"
               size="lg"
             >
               {isAddingGame ? (

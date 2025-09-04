@@ -147,25 +147,23 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
   return (
     <>
       {/* Header */}
-      <div className="relative overflow-hidden bg-white border border-gray-100 rounded-b-lg mb-6">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-15" />
-        <div className="relative px-6 py-6">
+      <div className="bg-card border-b mb-6">
+        <div className="px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={onBack}
-                className="w-10 h-10 rounded-xl hover:bg-white/50 transition-colors"
               >
-                <ArrowLeft className="h-5 w-5 text-gray-700" />
+                <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-3">
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">
+                  <h1 className="text-xl font-bold text-foreground">
                     {showNewSession ? "New Session" : "Sessions"}
                   </h1>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {showNewSession ? "Create a new game session" : "View session history"}
                   </p>
                 </div>
@@ -179,11 +177,11 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
       <div className="px-6 pb-8">
         {/* New Session Form */}
         {showNewSession && (
-          <div className="mb-8 animate-fade-in">
-            <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="mb-8">
+            <div className="bg-card rounded-lg p-6 border">
               <form onSubmit={(e) => void handleCreateSession(e)} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="sessionName" className="text-gray-700 font-medium">
+                  <Label htmlFor="sessionName" className="text-foreground font-medium">
                     Session Name
                   </Label>
                   <Input
@@ -192,14 +190,13 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                     value={newSessionName}
                     onChange={(e) => setNewSessionName(e.target.value)}
                     placeholder="Enter session name"
-                    className="border-gray-200 rounded-xl h-12"
                     required
                   />
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="text-gray-700 font-medium">
+                    <Label className="text-foreground font-medium">
                       Players ({playerNames.filter(name => name.trim().length > 0).length} added)
                     </Label>
                     <Button
@@ -207,7 +204,6 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                       variant="outline"
                       size="sm"
                       onClick={addPlayerField}
-                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
                     >
                       <UserPlus className="h-4 w-4 mr-1" />
                       Add Player
@@ -223,7 +219,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                             onChange={(e) => updatePlayerName(index, e.target.value)}
                             onKeyDown={(e) => handlePlayerKeyDown(e, index)}
                             placeholder={`Player ${index + 1} name`}
-                            className="flex-1 border-gray-200 rounded-xl h-12"
+                            className="flex-1"
                             data-player-index={index}
                           />
                           {playerNames.length > 2 && (
@@ -232,14 +228,13 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                               variant="outline"
                               size="icon"
                               onClick={() => removePlayerField(index)}
-                              className="w-12 h-12 border-gray-200 hover:bg-red-50 hover:border-red-200"
                             >
-                              <X className="h-4 w-4 text-gray-500" />
+                              <X className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
                         {index === 0 && (
-                          <p className="text-xs text-gray-500 ml-1">
+                          <p className="text-xs text-muted-foreground ml-1">
                             💡 Press Enter to move to next player
                           </p>
                         )}
@@ -251,7 +246,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                 {/* Passcode Section */}
                 <div className="space-y-4">
                   <div className="space-y-3">
-                    <Label className="text-gray-700 font-medium">
+                    <Label className="text-foreground font-medium">
                       Game Passcode
                     </Label>
                     
@@ -260,10 +255,10 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                       {/* Auto-generate Option */}
                       <button
                         type="button"
-                        className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all w-full text-left ${
+                        className={`relative border rounded-lg p-4 cursor-pointer transition-all w-full text-left ${
                           !useCustomPasscode 
-                            ? "border-blue-300 bg-blue-50/50" 
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            ? "border-primary bg-accent" 
+                            : "border-border bg-card hover:bg-accent"
                         }`}
                         onClick={() => {
                           setUseCustomPasscode(false);
@@ -273,19 +268,19 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                         <div className="flex items-center gap-3">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                             !useCustomPasscode 
-                              ? "border-blue-500 bg-blue-500" 
-                              : "border-gray-300"
+                              ? "border-primary bg-primary" 
+                              : "border-muted-foreground"
                           }`}>
                             {!useCustomPasscode && (
-                              <div className="w-2 h-2 bg-white rounded-full" />
+                              <div className="w-2 h-2 bg-primary-foreground rounded-full" />
                             )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <Lock className="h-4 w-4 text-blue-600" />
-                              <span className="font-medium text-gray-900">Auto-generate</span>
+                              <Lock className="h-4 w-4 text-primary" />
+                              <span className="font-medium text-foreground">Auto-generate</span>
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               A random 6-digit passcode will be created automatically
                             </p>
                           </div>
@@ -295,29 +290,29 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                       {/* Custom Option */}
                       <button
                         type="button"
-                        className={`relative border-2 rounded-xl p-4 cursor-pointer transition-all w-full text-left ${
+                        className={`relative border rounded-lg p-4 cursor-pointer transition-all w-full text-left ${
                           useCustomPasscode 
-                            ? "border-purple-300 bg-purple-50/50" 
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            ? "border-primary bg-accent" 
+                            : "border-border bg-card hover:bg-accent"
                         }`}
                         onClick={() => setUseCustomPasscode(true)}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                             useCustomPasscode 
-                              ? "border-purple-500 bg-purple-500" 
-                              : "border-gray-300"
+                              ? "border-primary bg-primary" 
+                              : "border-muted-foreground"
                           }`}>
                             {useCustomPasscode && (
-                              <div className="w-2 h-2 bg-white rounded-full" />
+                              <div className="w-2 h-2 bg-primary-foreground rounded-full" />
                             )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <Plus className="h-4 w-4 text-purple-600" />
-                              <span className="font-medium text-gray-900">Custom passcode</span>
+                              <Plus className="h-4 w-4 text-primary" />
+                              <span className="font-medium text-foreground">Custom passcode</span>
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               Set your own memorable 6-digit passcode
                             </p>
                           </div>
@@ -325,7 +320,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
                         {/* Custom Passcode Input */}
                         {useCustomPasscode && (
-                          <div className="mt-4 pt-4 border-t border-purple-200 animate-fade-in"
+                          <div className="mt-4 pt-4 border-t border-border"
                             onMouseDown={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >
@@ -338,7 +333,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                                   setCustomPasscode(value);
                                 }}
                                 placeholder="123456"
-                                className="flex-1 border-purple-200 rounded-lg h-11 font-mono text-lg tracking-wider text-center focus:border-purple-400 focus:ring-purple-400"
+                                className="flex-1 font-mono text-lg tracking-wider text-center"
                                 maxLength={6}
                               />
                               <Button
@@ -349,14 +344,13 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                                   const randomPasscode = Math.floor(100000 + Math.random() * 900000).toString();
                                   setCustomPasscode(randomPasscode);
                                 }}
-                                className="w-11 h-11 border-purple-200 hover:bg-purple-50 hover:border-purple-300"
                                 title="Generate random passcode"
                               >
-                                <Shuffle className="h-4 w-4 text-purple-600" />
+                                <Shuffle className="h-4 w-4" />
                               </Button>
                             </div>
                             {customPasscode.length > 0 && customPasscode.length < 6 && (
-                              <p className="text-xs text-purple-600 mt-2">
+                              <p className="text-xs text-muted-foreground mt-2">
                                 Enter {6 - customPasscode.length} more digit{6 - customPasscode.length !== 1 ? 's' : ''}
                               </p>
                             )}
@@ -370,7 +364,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                 <Button
                   type="submit"
                   disabled={!newSessionName.trim() || playerNames.filter(name => name.trim().length > 0).length < 2 || (useCustomPasscode && customPasscode.length !== 6)}
-                  className="w-full bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 hover:from-green-500 hover:via-green-600 hover:to-emerald-600 text-white border-0 transition-all duration-200 h-12 text-base font-medium"
+                  className="w-full"
                 >
                   <Plus className="h-5 w-5 mr-2" />
                   Create Session
@@ -382,20 +376,20 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
         {/* Quick Start */}
       {!showNewSession && (
-        <Card className="app-card border-0 animate-slide-in">
+        <Card>
           <CardHeader className="pb-4">
             <CardTitle className="text-xl flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                <Play className="h-5 w-5 text-white" />
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                <Play className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-gray-900 font-semibold">Quick Start</span>
+              <span className="text-foreground font-semibold">Quick Start</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-600 text-base">
+            <p className="text-muted-foreground text-base">
               Start a game with 2 default players
             </p>
-            <Button onClick={handleQuickStart} className="w-full app-button-primary h-12 text-base font-medium">
+            <Button onClick={handleQuickStart} className="w-full">
               <Play className="h-5 w-5 mr-2" />
               Start Game Now
             </Button>
@@ -405,7 +399,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                 setNewSessionName(generateSessionName());
                 setShowNewSession(true);
               }}
-              className="w-full app-button-secondary h-12 text-base font-medium"
+              className="w-full"
             >
               <Plus className="h-5 w-5 mr-2" />
               Custom Session
@@ -416,14 +410,14 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
 
       {/* Session History */}
       {!showNewSession && sessions.filter(s => !s.isActive).length > 0 && (
-        <div className="animate-fade-in">
+        <div>
           <div className="flex items-center gap-2 mt-4 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-gray-400 via-gray-500 to-slate-600 rounded-lg flex items-center justify-center">
-              <ClockCounterClockwise className="h-4 w-4 text-white" />
+            <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
+              <ClockCounterClockwise className="h-4 w-4 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Recent Sessions</h2>
+            <h2 className="text-lg font-semibold text-foreground">Recent Sessions</h2>
           </div>
-          <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <div className="bg-card rounded-lg p-6 border">
             <div className="space-y-3">
               {sessions.filter(s => !s.isActive).slice(0, 3).map((session) => (
                 <SessionHistorySheet key={session._id} session={session} />
@@ -466,19 +460,19 @@ function SessionHistorySheet({ session }: SessionHistorySheetProps) {
   return (
     <PlayerHistoryDrawer
       trigger={
-        <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center">
-              <Trophy className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+              <Trophy className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-base text-gray-900">{session.name}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-semibold text-base text-foreground">{session.name}</h3>
+              <p className="text-sm text-muted-foreground">
                 {new Date(session._creationTime).toLocaleDateString()}
               </p>
             </div>
           </div>
-          <Eye className="h-5 w-5 text-gray-400" />
+          <Eye className="h-5 w-5 text-muted-foreground" />
         </div>
       }
       title={session.name}
