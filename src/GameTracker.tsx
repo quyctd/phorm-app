@@ -3,7 +3,6 @@ import type { Id } from "../convex/_generated/dataModel";
 import { Plus, Trophy, Lock } from "@phosphor-icons/react";
 import { SessionManager } from "./SessionManager";
 import { GameSession } from "./GameSession";
-import { PullToRefresh } from "./components/PullToRefresh";
 import { useConvexRefresh } from "./hooks/useConvexRefresh";
 import { JoinGameModal } from "./components/JoinGameModal";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
@@ -61,8 +60,7 @@ export function GameTracker() {
 
   // Home screen - main dashboard
   return (
-    <PullToRefresh
-      onRefresh={refreshData}
+    <div
       className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
     >
       {/* Header */}
@@ -159,6 +157,6 @@ export function GameTracker() {
         onClose={() => setShowJoinModal(false)}
         onSuccess={handleJoinSuccess}
       />
-    </PullToRefresh>
+    </div>
   );
 }
