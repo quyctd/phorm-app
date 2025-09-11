@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import {
   Drawer,
@@ -15,11 +14,117 @@ import {
 import { Lock } from "@phosphor-icons/react/dist/ssr";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface JoinGameDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: (sessionId: Id<"sessions">) => void;
+}
+
+interface OTPInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  length: number;
+  disabled?: boolean;
+  autoFocus?: boolean;
+}
+
+function OTPInput({ value, onChange, length, disabled = false, autoFocus = false }: OTPInputProps) {
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleChange = (index: number, inputDigit: string) => {
+    // Only allow single digits
+    let digit = inputDigit;
+    if (digit.length > 1) {
+      digit = digit.slice(-1);
+    }
+
+    // Only allow numbers
+    if (!/^\d*$/.test(digit)) {
+      return;
+    }
+
+    const newValue = value.split('');
+    newValue[index] = digit;
+    const updatedValue = newValue.join('').slice(0, length);
+    onChange(updatedValue);
+
+    // Auto-focus next input
+    if (digit && index < length - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      if (!value[index] && index > 0) {
+        // If current input is empty, focus previous input and clear it
+        inputRefs.current[index - 1]?.focus();
+        const newValue = value.split('');
+        newValue[index - 1] = '';
+        onChange(newValue.join(''));
+      } else {
+        // Clear current input
+        const newValue = value.split('');
+        newValue[index] = '';
+        onChange(newValue.join(''));
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < length - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length);
+    onChange(pastedData);
+
+    // Focus the next empty input or the last input
+    const nextIndex = Math.min(pastedData.length, length - 1);
+    inputRefs.current[nextIndex]?.focus();
+  };
+
+  // Auto-focus first input when component mounts
+  useEffect(() => {
+    if (autoFocus && inputRefs.current[0]) {
+      const timer = setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocus]);
+
+  return (
+    <div className="flex gap-3 justify-center">
+      {Array.from({ length }, (_, index) => (
+        <input
+          key={`otp-${index.toString()}`}
+          ref={(el) => {
+            inputRefs.current[index] = el;
+          }}
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={value[index] || ''}
+          onChange={(e) => handleChange(index, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(index, e)}
+          onPaste={handlePaste}
+          disabled={disabled}
+          className={cn(
+            "w-14 h-16 text-center text-3xl font-bold border-2 rounded-lg",
+            "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+            "transition-all duration-200",
+            value[index] ? "border-primary bg-primary/5" : "border-muted-foreground/30",
+            disabled && "opacity-50 cursor-not-allowed"
+          )}
+          maxLength={1}
+        />
+      ))}
+    </div>
+  );
 }
 
 export function JoinGameDrawer({ isOpen, onOpenChange, onSuccess }: JoinGameDrawerProps) {
@@ -36,7 +141,7 @@ export function JoinGameDrawer({ isOpen, onOpenChange, onSuccess }: JoinGameDraw
     }
   }, [isOpen]);
 
-  const handleJoin = async () => {
+  const handleJoin = useCallback(async () => {
     if (!passcode.trim()) {
       toast.error(t('joinGameModal.validation.passcodeRequired'));
       return;
@@ -59,12 +164,20 @@ export function JoinGameDrawer({ isOpen, onOpenChange, onSuccess }: JoinGameDraw
     } finally {
       setIsJoining(false);
     }
-  };
+  }, [passcode, joinByPasscode, onSuccess, onOpenChange, t]);
+
+  // Auto-submit when passcode is complete
+  useEffect(() => {
+    if (passcode.length === 6 && !isJoining) {
+      const timer = setTimeout(() => {
+        void handleJoin();
+      }, 300); // Small delay for better UX
+      return () => clearTimeout(timer);
+    }
+  }, [passcode, isJoining, handleJoin]);
 
   const handlePasscodeChange = (value: string) => {
-    // Only allow digits and limit to 6 characters
-    const cleaned = value.replace(/\D/g, '').slice(0, 6);
-    setPasscode(cleaned);
+    setPasscode(value);
   };
 
   const handleClose = () => {
@@ -73,7 +186,7 @@ export function JoinGameDrawer({ isOpen, onOpenChange, onSuccess }: JoinGameDraw
 
   return (
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[80vh]">
+      <DrawerContent className="h-fit">
         <DrawerHeader>
           <DrawerTitle className="flex items-center gap-2 justify-center">
             <Lock className="h-5 w-5" />
@@ -85,29 +198,22 @@ export function JoinGameDrawer({ isOpen, onOpenChange, onSuccess }: JoinGameDraw
         </DrawerHeader>
 
         {/* Scrollable Content */}
-        <div className="px-4 space-y-6 overflow-y-auto flex-1">
-          <div className="space-y-6">
-            <div>
-              <Label htmlFor="passcode" className="text-sm font-medium text-foreground mb-2 block">
+        <div className="px-4 space-y-8 overflow-y-auto py-8">
+          <div className="space-y-8">
+            <div className="text-center">
+              <Label className="text-xl font-medium text-foreground mb-6 block">
                 {t('joinGameModal.passcode')}
               </Label>
-              <Input
-                id="passcode"
-                type="text"
-                value={passcode}
-                onChange={(e) => handlePasscodeChange(e.target.value)}
-                placeholder={t('joinGameModal.passcodePlaceholder')}
-                className="h-14 text-center text-2xl font-mono tracking-widest border-2 focus:border-primary"
-                maxLength={6}
-                autoFocus
-                disabled={isJoining}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && passcode.length === 6 && !isJoining) {
-                    void handleJoin();
-                  }
-                }}
-              />
-              <p className="text-xs text-muted-foreground mt-2 text-center">
+              <div className="mb-6">
+                <OTPInput
+                  value={passcode}
+                  onChange={handlePasscodeChange}
+                  length={6}
+                  disabled={isJoining}
+                  autoFocus={true}
+                />
+              </div>
+              <p className="text-base text-muted-foreground">
                 Ask the game creator for the 6-digit passcode
               </p>
             </div>
@@ -120,15 +226,17 @@ export function JoinGameDrawer({ isOpen, onOpenChange, onSuccess }: JoinGameDraw
             <Button
               type="button"
               variant="outline"
+              size="lg"
               onClick={handleClose}
-              className="flex-1 h-12 text-base font-medium"
+              className="flex-1 font-medium"
               disabled={isJoining}
             >
               {t('common.cancel')}
             </Button>
             <Button
               onClick={() => void handleJoin()}
-              className="flex-1 h-12 text-base font-medium"
+              className="flex-1 font-medium"
+              size="lg"
               disabled={isJoining || passcode.length !== 6}
             >
               {isJoining ? (

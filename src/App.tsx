@@ -13,18 +13,7 @@ export default function App() {
       <PWAInstallPrompt />
       <Toaster
         position="top-center"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: 'white',
-            color: '#1f2937',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.08)',
-            fontSize: '16px',
-            fontWeight: '500',
-          },
-        }}
+        richColors
       />
     </div>
   );

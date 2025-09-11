@@ -9,13 +9,7 @@ import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
 import { Avatar } from "./components/ui/avatar";
 import { useConvexRefresh } from "./hooks/useConvexRefresh";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./components/ui/dropdown-menu";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +26,7 @@ import { GameKeypad } from "./components/GameKeypad";
 import { AddPlayerModal } from "./components/AddPlayerModal";
 import { GameResultsDrawer } from "./components/GameResultsModal";
 import { GameSettingsDrawer } from "./components/GameSettingsModal";
-import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, ShareNetwork, DotsThreeVertical, UserPlus, CrownSimple, Medal, Gear } from "@phosphor-icons/react";
+import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, ShareNetwork, UserPlus, CrownSimple, Medal, Gear, Lock, Copy } from "@phosphor-icons/react";
 
 interface GameSessionProps {
   sessionId: Id<"sessions">;
@@ -345,26 +339,46 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   const handleShare = async () => {
     if (!activeSession) return;
 
-    const shareText = `Join my game "${activeSession.name}"!\n\nPasscode: ${activeSession.passcode}\n\nOpen Phorm and use the passcode to join the game.`;
+    const appUrl = window.location.origin;
+    const shareText = `🎮 You're invited to join "${activeSession.name}"!
+
+🔑 Game Code: ${activeSession.passcode}
+
+Ready to play? Join now:
+${appUrl}
+
+Just enter the game code when you open the app. Let's have some fun! 🚀`;
 
     try {
       // Check if Web Share API is available (mobile devices)
       if (navigator.share) {
         await navigator.share({
-          title: `Join "${activeSession.name}" Game Session`,
+          title: `🎮 Join "${activeSession.name}" - Let's Play!`,
           text: shareText,
+          url: appUrl,
         });
-        toast.success("Game passcode shared successfully!");
+        toast.success("Game session shared successfully!");
       } else {
         // Fallback: Copy to clipboard
         await navigator.clipboard.writeText(shareText);
-        toast.success("Game passcode copied to clipboard!");
+        toast.success("Game session link copied to clipboard!");
       }
     } catch (error) {
       // Final fallback: Show the passcode in a toast
-      toast.info(`Share this passcode: ${activeSession.passcode}`, {
+      toast.info(`🎮 Share this game code: ${activeSession.passcode}`, {
         duration: 10000,
       });
+    }
+  };
+
+  const handleCopyPasscode = async () => {
+    if (!activeSession) return;
+
+    try {
+      await navigator.clipboard.writeText(activeSession.passcode);
+      toast.success("Passcode copied to clipboard!");
+    } catch (error) {
+      toast.error("Failed to copy passcode");
     }
   };
 
@@ -503,62 +517,88 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 Game {games.length + 1}
               </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <DotsThreeVertical className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => void handleShare()} className="cursor-pointer">
-                    <ShareNetwork className="h-4 w-4 mr-2" />
-                    Share Session
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setGameSettingsDrawerOpen(true)}
-                    className="cursor-pointer"
-                  >
-                    <Gear className="h-4 w-4 mr-2" />
-                    Game Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      // We'll trigger the alert dialog programmatically
-                      document.getElementById('end-session-trigger')?.click();
-                    }}
-                    className="cursor-pointer text-destructive focus:text-destructive"
-                  >
-                    <Pause className="h-4 w-4 mr-2" />
-                    End Session
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-2">
+                {/* <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setGameSettingsDrawerOpen(true)}
+                  className="text-xs"
+                >
+                  <Gear className="h-3 w-3 mr-1" />
+                  Settings
+                </Button> */}
 
-              {/* Hidden AlertDialog trigger */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button type="button" id="end-session-trigger" className="hidden" aria-label="End session trigger" />
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>End Session?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will end "{activeSession?.name || 'this session'}". All data will be saved.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => void handleEndSession()}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-sm text-destructive hover:text-destructive border-destructive/30 hover:border-destructive hover:bg-destructive/5"
                     >
-                      End Session
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <Pause className="size-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>End Session?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will end "{activeSession?.name || 'this session'}". All data will be saved.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => void handleEndSession()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        End Session
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+
+
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Passcode Display Section */}
+      <div className="p-4 pb-0">
+        <div className="bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/20 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+                  <Lock className="size-4 text-primary-foreground" />
+                </div>
+                <span className="text-base font-medium text-foreground">Game Passcode</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-2xl font-bold text-primary tracking-wider">
+                  {activeSession?.passcode}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleCopyPasscode()}
+                  className="h-8 px-3 text-xs"
+                >
+                  <Copy className="size-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Share this code with friends to join the game
+              </p>
+            </div>
+            <Button
+              onClick={() => void handleShare()}
+              className="ml-4 h-10 px-4"
+            >
+              <ShareNetwork className="h-4 w-4" />
+              Share
+            </Button>
           </div>
         </div>
       </div>

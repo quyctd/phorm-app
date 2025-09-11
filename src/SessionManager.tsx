@@ -243,7 +243,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
               {/* Passcode Section */}
               <div className="space-y-4">
                 <div className="space-y-3">
-                  <Label className="text-foreground font-medium">
+                  <Label className="text-foreground font-medium text-lg">
                     Game Passcode
                   </Label>
                   
@@ -274,7 +274,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Lock className="h-4 w-4 text-primary" />
+                            <Lock className="size-6 text-primary" />
                             <span className="font-medium text-foreground text-lg">Auto-generate</span>
                           </div>
                           <p className="text-base text-muted-foreground">
@@ -306,7 +306,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Plus className="h-4 w-4 text-primary" />
+                            <Plus className="size-6 text-primary" />
                             <span className="font-medium text-foreground text-lg">Custom passcode</span>
                           </div>
                           <p className="text-base text-muted-foreground">
@@ -323,14 +323,14 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                         >
                           <div className="flex gap-3">
                             <Input
-                              type="text"
+                              type="number"
                               value={customPasscode}
                               onChange={(e) => {
                                 const value = e.target.value.replace(/\D/g, '').slice(0, 6);
                                 setCustomPasscode(value);
                               }}
                               placeholder="123456"
-                              className="flex-1 font-mono text-lg tracking-wider text-center"
+                              className="flex-1 font-mono text-xl tracking-wider text-center"
                               maxLength={6}
                             />
                             <Button
@@ -362,6 +362,7 @@ export function SessionManager({ onBack, onNavigateToGame, initialView = "histor
                 type="submit"
                 disabled={!newSessionName.trim() || playerNames.filter(name => name.trim().length > 0).length < 2 || (useCustomPasscode && customPasscode.length !== 6)}
                 className="w-full"
+                size="lg"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Create Session
