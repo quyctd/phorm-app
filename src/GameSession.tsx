@@ -31,7 +31,7 @@ import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
 import { GameKeypad } from "./components/GameKeypad";
 import { AddPlayerModal } from "./components/AddPlayerModal";
 import { GameResultsDrawer } from "./components/GameResultsModal";
-import { GameSettingsModal } from "./components/GameSettingsModal";
+import { GameSettingsDrawer } from "./components/GameSettingsModal";
 import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, ShareNetwork, DotsThreeVertical, UserPlus, CrownSimple, Medal, Gear } from "@phosphor-icons/react";
 
 interface GameSessionProps {
@@ -61,6 +61,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAddingGame, setIsAddingGame] = useState(false);
   const [gameResultsDrawerOpen, setGameResultsDrawerOpen] = useState(false);
+  const [gameSettingsDrawerOpen, setGameSettingsDrawerOpen] = useState(false);
   const [gameResultsData, setGameResultsData] = useState<{
     gameNumber: number;
     results: Array<{
@@ -513,17 +514,8 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                     <ShareNetwork className="h-4 w-4 mr-2" />
                     Share Session
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      if (activeSession) {
-                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        NiceModal.show(GameSettingsModal, {
-                          sessionId,
-                          sessionName: activeSession.name,
-                          currentPasscode: activeSession.passcode
-                        });
-                      }
-                    }} 
+                  <DropdownMenuItem
+                    onClick={() => setGameSettingsDrawerOpen(true)}
                     className="cursor-pointer"
                   >
                     <Gear className="h-4 w-4 mr-2" />
@@ -868,6 +860,17 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
           setGameResultsDrawerOpen(false);
           setGameResultsData(null);
         }}
+      />
+    )}
+
+    {/* Game Settings Drawer */}
+    {activeSession && (
+      <GameSettingsDrawer
+        isOpen={gameSettingsDrawerOpen}
+        onOpenChange={setGameSettingsDrawerOpen}
+        sessionId={sessionId}
+        sessionName={activeSession.name}
+        currentPasscode={activeSession.passcode}
       />
     )}
     </>
