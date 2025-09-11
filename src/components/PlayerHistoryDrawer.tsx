@@ -79,7 +79,7 @@ export function PlayerHistoryDrawer({
       <DrawerTrigger asChild>
         {trigger}
       </DrawerTrigger>
-      <DrawerContent className="h-[80vh]">
+      <DrawerContent className="h-[90vh]">
         <DrawerHeader>
           <DrawerTitle className="flex items-center gap-2 justify-center">
             <Trophy className="h-5 w-5" />
@@ -100,7 +100,7 @@ export function PlayerHistoryDrawer({
                 <div key={player.id} className="space-y-2">
                   {/* Player Summary Row */}
                   <div
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                       index === 0 && total > 0 ? "bg-destructive/10 border-destructive/20" : "bg-muted/20 hover:bg-muted/30"
                     }`}
                     onClick={() => togglePlayerExpansion(player.id)}
@@ -115,31 +115,31 @@ export function PlayerHistoryDrawer({
                     aria-expanded={expandedPlayers.has(player.id)}
                     aria-label={`Toggle details for ${player.name}`}
                   >
-                    <span className="text-sm font-bold text-muted-foreground w-6">#{index + 1}</span>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs ${avatar.color}`}>
+                    <span className="text-base font-bold text-muted-foreground w-6">#{index + 1}</span>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color}`}>
                       {avatar.initials}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className={"font-semibold text-sm"}>
+                        <span className={"font-semibold text-base"}>
                           {player.name}
                         </span>
                         {index === 0 && total > 0 && (
-                          <Badge variant="destructive" className="text-xs px-1 py-0">
+                          <Badge variant="destructive" className="text-sm px-1 py-0">
                             Last
                           </Badge>
                         )}
                       </div>
                       {playerHistory.length > 0 && (
                         <div className="flex items-center gap-1 mt-1">
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-sm text-muted-foreground">
                             {playerHistory.length} game{playerHistory.length !== 1 ? 's' : ''} played
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`font-bold text-sm ${index === 0 && total > 0 ? "text-destructive" : ""}`}>
+                      <span className={`font-bold text-base ${index === 0 && total > 0 ? "text-destructive" : ""}`}>
                         {total > 0 ? "+" : ""}{total}
                       </span>
                       <CaretRight className={`h-4 w-4 text-muted-foreground transition-transform ${
@@ -153,11 +153,11 @@ export function PlayerHistoryDrawer({
                     <div className="ml-6 space-y-1 pb-2">
                       <div className="flex items-center gap-2 mb-2">
                         <ClockCounterClockwise className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground">Game History</span>
+                        <span className="text-sm font-medium text-muted-foreground">Game History</span>
                       </div>
                       {playerHistory.map((gameData) => (
                         <div key={gameData.gameId} className="flex items-center justify-between py-1 px-2 rounded bg-muted/10">
-                          <span className="text-xs text-muted-foreground">Game {gameData.gameNumber}</span>
+                          <span className="text-sm text-muted-foreground">Game {gameData.gameNumber}</span>
                           <div className="flex items-center gap-2">
                             <span className={`text-xs font-medium ${gameData.points > 0 ? "text-destructive" : ""}`}>
                               {gameData.points > 0 ? "+" : ""}{gameData.points}

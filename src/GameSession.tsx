@@ -30,7 +30,7 @@ import {
 import { PlayerHistoryDrawer } from "./components/PlayerHistoryDrawer";
 import { GameKeypad } from "./components/GameKeypad";
 import { AddPlayerModal } from "./components/AddPlayerModal";
-import { GameResultsModal } from "./components/GameResultsModal";
+import { GameResultsDrawer } from "./components/GameResultsModal";
 import { GameSettingsModal } from "./components/GameSettingsModal";
 import { ArrowLeft, Trophy, Plus, Target, Users, Play, Pause, ShareNetwork, DotsThreeVertical, UserPlus, CrownSimple, Medal, Gear } from "@phosphor-icons/react";
 
@@ -49,7 +49,6 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
     api.games.getTotals,
     { sessionId }
   ) || {};
-  const { refreshData } = useConvexRefresh();
 
   const addGame = useMutation(api.games.addGame);
   const removeGame = useMutation(api.games.removeGame);
@@ -61,6 +60,15 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isAddingGame, setIsAddingGame] = useState(false);
+  const [gameResultsDrawerOpen, setGameResultsDrawerOpen] = useState(false);
+  const [gameResultsData, setGameResultsData] = useState<{
+    gameNumber: number;
+    results: Array<{
+      player: { id: string; name: string };
+      points: number;
+      totalPoints: number;
+    }>;
+  } | null>(null);
 
   const allPlayers = useMemo(() =>
     activeSession ? activeSession.players : [],
@@ -196,7 +204,27 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   const handleAddGame = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('handleAddGame called', {
+      target: e.target,
+      currentTarget: e.currentTarget,
+      isAddingGame,
+      hasEnoughPointsInputted,
+      newGamePoints
+    });
+
     if (isAddingGame) return; // Prevent double submission
+
+    // Additional safeguard: Only proceed if this is a genuine form submission
+    // Check if the event target is the submit button or form
+    const target = e.target as HTMLElement;
+    const isValidSubmission = target.tagName === 'FORM' ||
+                             target.tagName === 'BUTTON' ||
+                             target.closest('button[type="submit"]');
+
+    if (!isValidSubmission) {
+      console.log('Prevented automatic form submission - invalid target:', target);
+      return;
+    }
 
     if (selectedPlayers.length < 2) {
       toast.error("Please select at least 2 players for the game");
@@ -235,10 +263,8 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
         points[autoCalcPlayerId] = -totalEntered;
         enteredCount++;
       } else if (playersWithoutPoints.length === 0) {
-        toast.error("When auto-calculate is enabled, leave one player's points empty to auto-calculate");
         return;
       } else {
-        toast.error(`When auto-calculate is enabled, enter points for exactly ${selectedPlayers.length - 1} players (leave 1 empty)`);
         return;
       }
     } else {
@@ -282,15 +308,12 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
       // Clear the form
       setNewGamePoints({});
 
-      // Show game results modal
-      NiceModal.show(GameResultsModal, {
+      // Show game results drawer
+      setGameResultsData({
         gameNumber: currentGameNumber,
-        results,
-        onContinue: () => {
-          // Modal handles its own closing
-          // Form is already cleared above
-        }
+        results
       });
+      setGameResultsDrawerOpen(true);
     } catch (error) {
       console.error("Error adding game:", error);
       toast.error("Failed to add game. Please try again.");
@@ -345,14 +368,28 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   };
 
   // Open keypad using NiceModal
-  const openKeypad = (playerId: string) => {
+  const openKeypad = (playerId: string, event?: React.MouseEvent) => {
+    console.log('openKeypad called for player:', playerId, {
+      currentPoints: newGamePoints,
+      hasEnoughPointsInputted,
+      event: event?.type
+    });
+
+    // Prevent event bubbling that might trigger form submission
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     const player = allPlayers.find(p => p.id === playerId);
     if (!player) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     NiceModal.show(GameKeypad, {
       playerName: player.name,
       initialValue: newGamePoints[playerId] || "",
       onConfirm: (value: string) => {
+        console.log('GameKeypad onConfirm called:', { playerId, value });
         setNewGamePoints(prev => ({
           ...prev,
           [playerId]: value
@@ -379,6 +416,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
 
   // Open add player modal
   const openAddPlayerModal = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     NiceModal.show(AddPlayerModal, {
       existingPlayerNames: allPlayers.map(p => p.name),
       onConfirm: handleAddPlayer
@@ -441,9 +479,9 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
   return (
     <>
       {/* Header */}
-      <div className="bg-card border-b mb-6">
+      <div className="bg-card border-b">
         <div className="px-6 py-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
@@ -478,6 +516,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                   <DropdownMenuItem 
                     onClick={() => {
                       if (activeSession) {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         NiceModal.show(GameSettingsModal, {
                           sessionId,
                           sessionName: activeSession.name,
@@ -533,10 +572,10 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
       </div>
 
       {/* Main Content */}
-      <div className="px-6 pb-8">
+      <div className="p-4">
                 {/* Current Leaderboard Section - Only show when there are games */}
         {games.length > 0 && (
-          <div className="mb-6">
+          <div>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -546,8 +585,8 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
               </div>
               <PlayerHistoryDrawer
                 trigger={
-                  <Button variant="outline" size="sm" className="text-xs">
-                    <Trophy className="h-3 w-3 mr-1" />
+                  <Button variant="outline" className="text-sm">
+                    <Trophy className="size-4 mr-1" />
                     Details
                   </Button>
                 }
@@ -559,7 +598,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 showRemoveButtons={true}
               />
             </div>
-            <div className="bg-card rounded-lg p-4 border">
+            <div className="bg-card rounded-lg p-4 border mb-4">
               <div className="space-y-3">
                 {finalResults.slice(0, 5).map((result, index) => {
                   const isTopThree = index < 3;
@@ -642,7 +681,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
 
         {/* Compact Player Selection */}
         <div className="mb-4">
-          <div className="bg-card rounded-lg p-3 border">
+          <div className="bg-card border rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -653,11 +692,10 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
           </div>
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={openAddPlayerModal}
-                className="h-7 px-2 text-xs"
+                className="h-7 px-2 text-sm"
               >
-                <UserPlus className="h-3 w-3 mr-1" />
+                <UserPlus className="size-4 mr-1" />
                 Add
               </Button>
             </div>
@@ -683,9 +721,9 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 >
                     <Avatar 
                       name={player.name} 
-                      size="sm"
+                      size="md"
                     />
-                    <span className={`text-xs font-medium whitespace-nowrap ${
+                    <span className={`text-sm font-medium whitespace-nowrap ${
                     isSelected ? "text-primary" : "text-muted-foreground"
                   }`}>
                     {player.name}
@@ -736,7 +774,6 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
             </p>
           )}
           <form onSubmit={(e) => void handleAddGame(e)} className="space-y-4">
-            {/* Compact Grid Layout - 2 columns on larger screens */}
             <div className="grid grid-cols-1 gap-2">
               {selectedPlayers.map((player) => {
                 const pointValue = newGamePoints[player.id] || (autoCalculate ? "auto" : "0");
@@ -746,9 +783,9 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                   <Button
                     key={player.id}
                     variant="outline"
-                    onClick={() => openKeypad(player.id)}
+                    onClick={(e) => openKeypad(player.id, e)}
                     disabled={isAddingGame}
-                    className="h-16 p-3 border-2 border-dashed border-primary bg-primary/5 hover:bg-primary/10 hover:border-primary active:scale-[0.98] transform disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="h-16 p-3 border-2 border-dashed border-primary bg-primary/5 hover:bg-primary/10 hover:border-primary transform disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     <div className="flex items-center justify-between w-full">
                       {/* Player avatar - left side */}
@@ -773,7 +810,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                         <div className={`
                           text-xl font-bold 
                           ${isAutoValue ? "text-primary" : "text-primary"}
-                          group-hover:scale-110 transition-transform
+                          transition-transform
                         `}>
                           {isAutoValue ? "auto" : pointValue}
                         </div>
@@ -802,7 +839,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 </>
               ) : !hasEnoughPointsInputted ? (
                 <>
-                  <Target className="h-5 w-5 mr-2" />
+                  <Target className="size-6 mr-2" />
                   {autoCalculate 
                     ? `Enter ${selectedPlayers.length - 1} player${selectedPlayers.length - 1 !== 1 ? 's' : ''} points`
                     : `Enter all ${selectedPlayers.length} player${selectedPlayers.length !== 1 ? 's' : ''} points`
@@ -810,7 +847,7 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
                 </>
               ) : (
                 <>
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="size-6 mr-2" />
               Add Game {games.length + 1}
                 </>
               )}
@@ -819,6 +856,20 @@ export function GameSession({ sessionId, onBack }: GameSessionProps) {
         </div>
       </div>
     </div>
+
+    {/* Game Results Drawer */}
+    {gameResultsData && (
+      <GameResultsDrawer
+        isOpen={gameResultsDrawerOpen}
+        onOpenChange={setGameResultsDrawerOpen}
+        gameNumber={gameResultsData.gameNumber}
+        results={gameResultsData.results}
+        onContinue={() => {
+          setGameResultsDrawerOpen(false);
+          setGameResultsData(null);
+        }}
+      />
+    )}
     </>
   );
 }

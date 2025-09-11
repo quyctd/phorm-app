@@ -80,7 +80,7 @@ export const GameKeypad = NiceModal.create(({
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: Modal backdrop for closing
     <div
-      className="fixed inset-0 bg-black/50 flex items-end justify-center z-50"
+      className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 safe-area-padding"
       onClick={handleClose}
       style={{ touchAction: 'none' }}
     >
@@ -93,8 +93,8 @@ export const GameKeypad = NiceModal.create(({
         {/* Display */}
         <div className="mb-6">
           <div className="text-center mb-2">
-            <span className="text-sm text-gray-600">
-              {playerName}
+            <span className="text-base text-gray-600">
+              Add points for {playerName}
             </span>
           </div>
           <div className="bg-gray-100 rounded-xl p-4 text-center">
@@ -126,7 +126,7 @@ export const GameKeypad = NiceModal.create(({
             variant="outline"
             size="lg"
             onClick={handleKeypadToggleSign}
-            className={`h-14 text-lg font-semibold ${
+            className={`h-14 text-2xl font-semibold ${
               isNegative
                 ? "bg-red-50 border-red-300 text-red-600 hover:bg-red-100"
                 : "bg-green-50 border-green-300 text-green-600 hover:bg-green-100"
@@ -146,9 +146,9 @@ export const GameKeypad = NiceModal.create(({
             variant="outline"
             size="lg"
             onClick={handleKeypadBackspace}
-            className="h-14 hover:bg-gray-50 hover:border-gray-300"
+            className="h-14 hover:bg-gray-50 hover:border-gray-300 [&_svg]:size-6 [&_svg]:shrink-0"
           >
-            <Backspace className="h-6 w-6" />
+            <Backspace />
           </Button>
         </div>
 
@@ -157,15 +157,15 @@ export const GameKeypad = NiceModal.create(({
           <Button
             variant="outline"
             onClick={handleClose}
-            className="h-12 text-base font-medium"
+            className="h-12 text-lg font-medium"
           >
             Cancel
           </Button>
           <Button
             onClick={handleKeypadConfirm}
-            className="h-12 text-base font-medium bg-green-500 hover:bg-green-600 text-white"
+            className="h-12 text-lg font-medium bg-green-500 hover:bg-green-600 text-white"
           >
-            <Check className="h-5 w-5 mr-2" />
+            <Check className="size-6 mr-2" />
             Confirm
           </Button>
         </div>

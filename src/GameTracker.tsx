@@ -3,7 +3,6 @@ import type { Id } from "../convex/_generated/dataModel";
 import { Plus, Trophy, Lock } from "@phosphor-icons/react";
 import { SessionManager } from "./SessionManager";
 import { GameSession } from "./GameSession";
-import { useConvexRefresh } from "./hooks/useConvexRefresh";
 import { JoinGameModal } from "./components/JoinGameModal";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
@@ -17,8 +16,6 @@ export function GameTracker() {
   const [sessionView, setSessionView] = useState<SessionView>("history");
   const [activeSessionId, setActiveSessionId] = useState<Id<"sessions"> | null>(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
-  
-  const { refreshData } = useConvexRefresh();
 
   const handleJoinSuccess = (sessionId: Id<"sessions">) => {
     setActiveSessionId(sessionId);
@@ -72,8 +69,8 @@ export function GameTracker() {
                 <Trophy className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{t('app.title')}</h1>
-                <p className="text-sm text-muted-foreground">{t('app.subtitle')}</p>
+                <h1 className="text-3xl font-bold text-foreground">{t('app.title')}</h1>
+                <p className="text-base text-muted-foreground">{t('app.subtitle')}</p>
               </div>
             </div>
             <LanguageSwitcher />
@@ -81,8 +78,8 @@ export function GameTracker() {
 
           {/* Welcome Message */}
           <div className="bg-primary rounded-xl p-4 text-primary-foreground">
-            <p className="font-semibold">{t('home.readyToStart')}</p>
-            <p className="text-sm opacity-90">{t('home.createSession')}</p>
+            <p className="font-semibold text-xl">{t('home.readyToStart')}</p>
+            <p className="text-base opacity-80">{t('home.createSession')}</p>
           </div>
         </div>
       </div>
@@ -100,12 +97,12 @@ export function GameTracker() {
                 className="bg-card rounded-lg p-6 border hover:bg-accent transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0">
                     <Plus className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground text-lg">{t('home.newGame.title')}</h3>
-                    <p className="text-muted-foreground text-sm">
+                    <h3 className="font-semibold text-foreground text-xl">{t('home.newGame.title')}</h3>
+                    <p className="text-muted-foreground text-base">
                       {t('home.newGame.description')}
                     </p>
                   </div>
@@ -119,12 +116,12 @@ export function GameTracker() {
                 className="bg-card rounded-lg p-6 border hover:bg-accent transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center shrink-0">
                     <Lock className="h-6 w-6 text-secondary-foreground" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground text-lg">{t('home.joinGame.title')}</h3>
-                    <p className="text-muted-foreground text-sm">
+                    <h3 className="font-semibold text-foreground text-xl">{t('home.joinGame.title')}</h3>
+                    <p className="text-muted-foreground text-base">
                       {t('home.joinGame.description')}
                     </p>
                   </div>
@@ -138,12 +135,12 @@ export function GameTracker() {
                 className="bg-card rounded-lg p-6 border hover:bg-accent transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center shrink-0">
                     <Trophy className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground text-lg">{t('home.history.title')}</h3>
-                    <p className="text-muted-foreground text-sm">
+                    <h3 className="font-semibold text-foreground text-xl">{t('home.history.title')}</h3>
+                    <p className="text-muted-foreground text-base">
                       {t('home.history.description')}
                     </p>
                   </div>
@@ -153,10 +150,10 @@ export function GameTracker() {
         </div>
       </div>
 
-      {/* Join Game Modal */}
+      {/* Join Game Drawer */}
       <JoinGameModal
         isOpen={showJoinModal}
-        onClose={() => setShowJoinModal(false)}
+        onOpenChange={setShowJoinModal}
         onSuccess={handleJoinSuccess}
       />
     </div>

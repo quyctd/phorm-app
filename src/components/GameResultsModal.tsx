@@ -1,7 +1,14 @@
-import { useState, useEffect } from "react";
-import NiceModal, { useModal } from "@ebay/nice-modal-react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "./ui/button";
-import { Trophy, Crown, Medal, ArrowRight } from "@phosphor-icons/react";
+import { Badge } from "./ui/badge";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "./ui/drawer";
+import { Trophy, Crown, Medal, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 
 interface Player {
   id: string;
@@ -14,28 +21,48 @@ interface GameResult {
   totalPoints: number;
 }
 
-interface GameResultsModalProps {
+interface GameResultsDrawerProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
   gameNumber: number;
   results: GameResult[];
   onContinue: () => void;
 }
 
-export const GameResultsModal = NiceModal.create(({
+export function GameResultsDrawer({
+  isOpen,
+  onOpenChange,
   gameNumber,
   results,
   onContinue,
-}: GameResultsModalProps) => {
-  const modal = useModal();
+}: GameResultsDrawerProps) {
   const [countdown, setCountdown] = useState(5);
   const [isAutoAdvancing, setIsAutoAdvancing] = useState(true);
 
   // Sort results by points (highest first for this game)
   const sortedResults = [...results].sort((a, b) => b.points - a.points);
-  
+
   // Sort by total points for overall ranking (lowest total first - typical for scoring games)
   const overallRanking = [...results].sort((a, b) => a.totalPoints - b.totalPoints);
 
+  const handleContinue = useCallback(() => {
+    onContinue();
+    onOpenChange(false);
+  }, [onContinue, onOpenChange]);
+
+  const handleStopAutoAdvance = useCallback(() => {
+    setIsAutoAdvancing(false);
+    setCountdown(0);
+  }, []);
+
   useEffect(() => {
+    if (!isOpen) {
+      // Reset state when drawer closes
+      setCountdown(5);
+      setIsAutoAdvancing(true);
+      return;
+    }
+
     if (!isAutoAdvancing || countdown <= 0) return;
 
     const timer = setInterval(() => {
@@ -49,28 +76,18 @@ export const GameResultsModal = NiceModal.create(({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [countdown, isAutoAdvancing]);
-
-  const handleContinue = () => {
-    onContinue();
-    modal.hide();
-  };
-
-  const handleStopAutoAdvance = () => {
-    setIsAutoAdvancing(false);
-    setCountdown(0);
-  };
+  }, [countdown, isAutoAdvancing, isOpen, handleContinue]);
 
   const getRankIcon = (index: number) => {
     switch (index) {
       case 0:
-        return <Crown className="h-6 w-6 text-yellow-500" />;
+        return <Crown className="h-5 w-5 text-yellow-500" />;
       case 1:
-        return <Medal className="h-6 w-6 text-gray-400" />;
+        return <Medal className="h-5 w-5 text-gray-400" />;
       case 2:
-        return <Medal className="h-6 w-6 text-amber-600" />;
+        return <Medal className="h-5 w-5 text-amber-600" />;
       default:
-        return <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">{index + 1}</div>;
+        return <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">{index + 1}</div>;
     }
   };
 
@@ -84,110 +101,110 @@ export const GameResultsModal = NiceModal.create(({
     return { initials, color: colors[colorIndex] };
   };
 
-  // Don't render if modal is not visible
-  if (!modal.visible) return null;
-
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: Modal backdrop for closing
-    <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
-      onClick={handleStopAutoAdvance}
-      style={{ touchAction: 'none' }}
-    >
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: Modal content container */}
-      <div
-        className="bg-white rounded-3xl p-6 w-full max-w-md animate-in fade-in zoom-in duration-300"
-        onClick={(e) => e.stopPropagation()}
-        style={{ touchAction: 'auto' }}
-      >
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Trophy className="h-8 w-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Game {gameNumber} Complete!</h2>
-          <p className="text-gray-600">Here's how everyone scored</p>
-        </div>
+    <Drawer open={isOpen} onOpenChange={onOpenChange}>
+      <DrawerContent className="h-[90vh]">
+        <DrawerHeader>
+          <DrawerTitle className="flex items-center gap-2 justify-center">
+            <Trophy className="h-5 w-5" />
+            Game {gameNumber} Complete!
+          </DrawerTitle>
+          <DrawerDescription className="text-center">
+            Here's how everyone scored
+          </DrawerDescription>
+        </DrawerHeader>
 
-        {/* Game Results */}
-        <div className="space-y-3 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">This Game Results</h3>
-          {sortedResults.map((result, index) => {
-            const avatar = getPlayerAvatar(result.player.name);
-            return (
-              <div
-                key={result.player.id}
-                className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-200 ${
-                  index === 0 
-                    ? "bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200" 
-                    : "bg-gray-50 border border-gray-200"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {getRankIcon(index)}
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color}`}>
-                    {avatar.initials}
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900">{result.player.name}</div>
-                  <div className="text-xs text-gray-500">Total: {result.totalPoints}</div>
-                </div>
-                <div className={`text-xl font-bold ${
-                  result.points > 0 ? "text-green-600" : result.points < 0 ? "text-red-600" : "text-gray-600"
-                }`}>
-                  {result.points > 0 ? "+" : ""}{result.points}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Overall Leaderboard */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Current Leaderboard</h3>
-          <div className="space-y-2">
-            {overallRanking.slice(0, 3).map((result, index) => {
+        {/* Scrollable Content */}
+        <div className="px-4 space-y-6 overflow-y-auto flex-1">
+          {/* Game Results */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-foreground">This Game Results</h3>
+            {sortedResults.map((result, index) => {
               const avatar = getPlayerAvatar(result.player.name);
               return (
-                <div key={result.player.id} className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
+                <div
+                  key={result.player.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
+                    index === 0
+                      ? "bg-emerald-50 border-emerald-200"
+                      : "bg-muted/20"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
                     {getRankIcon(index)}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs ${avatar.color}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${avatar.color}`}>
                       {avatar.initials}
                     </div>
                   </div>
                   <div className="flex-1">
-                    <span className="font-medium text-gray-900">{result.player.name}</span>
+                    <div className="font-semibold">{result.player.name}</div>
+                    <div className="text-xs text-muted-foreground">Total: {result.totalPoints}</div>
                   </div>
-                  <div className="font-bold text-gray-900">{result.totalPoints}</div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-lg font-bold ${
+                      result.points > 0 ? "text-green-600" : result.points < 0 ? "text-red-600" : "text-muted-foreground"
+                    }`}>
+                      {result.points > 0 ? "+" : ""}{result.points}
+                    </span>
+                    {index === 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        Winner
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Overall Leaderboard */}
+          <div className="bg-muted/30 rounded-lg p-4 mb-4">
+            <h3 className="text-lg font-semibold text-foreground mb-3">Current Leaderboard</h3>
+            <div className="space-y-2">
+              {overallRanking.slice(0, 3).map((result, index) => {
+                const avatar = getPlayerAvatar(result.player.name);
+                return (
+                  <div key={result.player.id} className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      {getRankIcon(index)}
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white font-bold text-xs ${avatar.color}`}>
+                        {avatar.initials}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-medium">{result.player.name}</span>
+                    </div>
+                    <div className="font-bold">{result.totalPoints}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <Button
-            onClick={handleContinue}
-            className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 h-12 text-base font-medium"
-          >
-            <ArrowRight className="h-5 w-5 mr-2" />
-            Continue to Game {gameNumber + 1}
-          </Button>
-          
-          {isAutoAdvancing && countdown > 0 && (
+        {/* Fixed Action Buttons at Bottom */}
+        <div className="px-4 pb-4 pt-2 border-t bg-background">
+          <div className="space-y-3">
             <Button
-              variant="outline"
-              onClick={handleStopAutoAdvance}
-              className="w-full h-10 text-sm border-gray-200 hover:bg-gray-50"
+              onClick={handleContinue}
+              className="w-full h-12 text-base font-medium"
             >
-              Auto-advancing in {countdown}s (tap to stop)
+              <ArrowRight className="h-5 w-5 mr-2" />
+              Continue to Game {gameNumber + 1}
             </Button>
-          )}
+
+            {isAutoAdvancing && countdown > 0 && (
+              <Button
+                variant="outline"
+                onClick={handleStopAutoAdvance}
+                className="w-full h-10 text-sm"
+              >
+                Auto-advancing in {countdown}s (tap to stop)
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </DrawerContent>
+    </Drawer>
   );
-});
+}

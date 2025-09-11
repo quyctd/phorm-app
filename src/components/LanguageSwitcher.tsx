@@ -18,8 +18,10 @@ export function LanguageSwitcher() {
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
-  const changeLanguage = (languageCode: string) => {
-    i18n.changeLanguage(languageCode);
+  const changeLanguage = (languageCode: string) => () => {
+    if (languageCode === i18n.language) return;
+
+    void i18n.changeLanguage(languageCode);
   };
 
   return (
@@ -31,15 +33,15 @@ export function LanguageSwitcher() {
           className="flex items-center gap-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
         >
           <Globe className="h-4 w-4 text-gray-600" />
-          <span className="text-sm">{currentLanguage.flag}</span>
-          <span className="hidden sm:inline text-sm">{currentLanguage.name}</span>
+          <span className="text-base">{currentLanguage.flag}</span>
+          <span className="hidden sm:inline text-base">{currentLanguage.name}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}
-            onClick={() => changeLanguage(language.code)}
+            onClick={changeLanguage(language.code)}
             className={`cursor-pointer ${
               i18n.language === language.code ? 'bg-blue-50 text-blue-600' : ''
             }`}
