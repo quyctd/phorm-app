@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phỏm/Sâm Score Tracker — UX Walkthrough</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif; }
+    .phone {
+      width: 375px;
+      height: 812px;
+      border-radius: 48px;
+      box-shadow: 0 0 0 12px #1c1c1e, 0 30px 60px -15px rgba(0,0,0,0.4);
+      overflow: hidden;
+      position: relative;
+      background: #fff;
+    }
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 30px;
+      background: #1c1c1e;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+      z-index: 50;
+    }
+    .phone-content {
+      padding-top: 48px;
+      height: 100%;
+      overflow-y: auto;
+      background: #f2f2f7;
+    }
+    .ios-blue { color: #007AFF; }
+    .bg-ios-blue { background: #007AFF; }
+    .border-ios-blue { border-color: #007AFF; }
+    .ios-red { color: #FF3B30; }
+    .ios-green { color: #34C759; }
+    .ios-orange { color: #FF9500; }
+    .bg-ios-green { background: #34C759; }
+    .bg-ios-orange { background: #FF9500; }
+    .scroll-x::-webkit-scrollbar { display: none; }
+    .scroll-x { -ms-overflow-style: none; scrollbar-width: none; }
+    .step-anchor { scroll-margin-top: 80px; }
+    .annotation::before {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #007AFF;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .annotation-left::before { right: -16px; }
+    .annotation-right::before { left: -16px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+  <!-- Sticky nav -->
+  <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex items-center gap-6 overflow-x-auto">
+      <div class="font-semibold text-slate-900 whitespace-nowrap">🎴 Phỏm/Sâm — UX Walkthrough</div>
+      <div class="flex gap-1 text-xs">
+        <a href="#step-1" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">1. Mở app</a>
+        <a href="#step-2" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">2. Tạo session</a>
+        <a href="#step-3" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">3. Bảng điểm</a>
+        <a href="#step-4" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">4. Thêm ván</a>
+        <a href="#step-5" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">5. Chặt heo</a>
+        <a href="#step-6" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">6. Sửa ván</a>
+        <a href="#step-7" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">7. Tổng kết</a>
+        <a href="#step-8" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">8. Lịch sử</a>
+        <a href="#step-9" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">9. Share</a>
+        <a href="#step-10" class="px-2 py-1 rounded hover:bg-slate-100 whitespace-nowrap">10. Nhận link</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="max-w-5xl mx-auto px-6 pt-12 pb-8">
+    <h1 class="text-4xl font-bold tracking-tight">Phỏm/Sâm Score Tracker</h1>
+    <p class="mt-3 text-lg text-slate-600">iOS native · Offline-first · No onboarding · iCloud sync</p>
+    <div class="mt-6 grid grid-cols-3 gap-3 max-w-2xl">
+      <div class="bg-white rounded-xl p-4 border border-slate-200">
+        <div class="text-2xl">⚡</div>
+        <div class="mt-1 font-medium text-sm">Fast</div>
+        <div class="text-xs text-slate-500">Mở app là chơi. N-1 số/ván.</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200">
+        <div class="text-2xl">📴</div>
+        <div class="mt-1 font-medium text-sm">Offline-first</div>
+        <div class="text-xs text-slate-500">SwiftData local. iCloud bonus.</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-slate-200">
+        <div class="text-2xl">🎯</div>
+        <div class="mt-1 font-medium text-sm">No onboarding</div>
+        <div class="text-xs text-slate-500">Không signup. Defaults tốt sẵn.</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- STEP 1: Empty state -->
+  <section id="step-1" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 1</div>
+      <h2 class="mt-2 text-3xl font-bold">Mở app lần đầu / chưa có session</h2>
+      <p class="mt-4 text-slate-600">HomeView empty state. 1 nút duy nhất. Icon History ẩn ở góc — chỉ dùng khi muốn xem buổi cũ.</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>0 tap</strong> để bắt đầu khi có session active (xem step 3).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Không splash screen, không tutorial, không welcome.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Tap icon góc phải để vào <strong>Lịch sử</strong> (step 8).</span></li>
+      </ul>
+    </div>
+    <div class="flex justify-center">
+      <div class="phone">
+        <div class="phone-content flex flex-col">
+          <!-- Status bar mock -->
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span>
+            <span>•••</span>
+          </div>
+          <!-- Header -->
+          <div class="flex justify-between items-center px-5 py-3">
+            <div class="text-lg font-bold">Phỏm/Sâm</div>
+            <button class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600">⋯</button>
+          </div>
+          <!-- Empty state -->
+          <div class="flex-1 flex flex-col items-center justify-center px-8 -mt-12">
+            <div class="text-7xl mb-6 opacity-30">🎴</div>
+            <div class="text-base text-slate-500 text-center">Chưa có session đang chơi</div>
+            <div class="text-sm text-slate-400 text-center mt-1">Bắt đầu buổi mới ở dưới</div>
+          </div>
+          <!-- Big button -->
+          <div class="px-5 pb-12">
+            <button class="w-full bg-ios-blue text-white font-semibold py-4 rounded-2xl text-base shadow-lg">
+              + Tạo session mới
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2: New session -->
+  <section id="step-2" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center bg-white rounded-3xl shadow-sm">
+    <div class="flex justify-center order-2 md:order-1">
+      <div class="phone">
+        <div class="phone-content">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <!-- Sheet header -->
+          <div class="flex justify-between items-center px-5 py-3 border-b border-slate-200">
+            <button class="text-slate-500">✕</button>
+            <div class="font-semibold">Tạo session mới</div>
+            <div class="w-6"></div>
+          </div>
+          <div class="p-5 space-y-5">
+            <!-- Name -->
+            <div>
+              <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tên session</label>
+              <div class="mt-2 px-4 py-3 bg-slate-100 rounded-xl text-slate-700">24/05/2026 19:30</div>
+              <div class="mt-1 text-xs text-slate-400">Tap để sửa</div>
+            </div>
+            <!-- Last group quick action -->
+            <div>
+              <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Nhóm vừa chơi</label>
+              <button class="mt-2 w-full px-4 py-3 bg-blue-50 rounded-xl text-left flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-sm">An · Bình · Cường · Dũng</div>
+                  <div class="text-xs text-slate-500 mt-0.5">Tối 22/05/2026</div>
+                </div>
+                <span class="text-xs font-semibold ios-blue">Dùng lại</span>
+              </button>
+            </div>
+            <!-- Custom -->
+            <div>
+              <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Hoặc thêm người</label>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 rounded-full text-sm">An <span class="text-slate-400">✕</span></span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 rounded-full text-sm">Bình <span class="text-slate-400">✕</span></span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 rounded-full text-sm">Cường <span class="text-slate-400">✕</span></span>
+              </div>
+              <input type="text" placeholder="+ Thêm người..." class="mt-2 w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:outline-none" />
+              <!-- Autosuggest dropdown -->
+              <div class="mt-1 bg-white border border-slate-200 rounded-xl shadow-lg text-sm">
+                <div class="px-4 py-2 hover:bg-slate-50">Dũng <span class="text-xs text-slate-400">(7 buổi)</span></div>
+                <div class="px-4 py-2 hover:bg-slate-50">Em <span class="text-xs text-slate-400">(3 buổi)</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- Bottom button -->
+          <div class="px-5 pt-2 pb-8 bg-white sticky bottom-0">
+            <button class="w-full bg-ios-blue text-white font-semibold py-4 rounded-2xl text-base">Bắt đầu →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="order-1 md:order-2">
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 2</div>
+      <h2 class="mt-2 text-3xl font-bold">Tạo session</h2>
+      <p class="mt-4 text-slate-600">Sheet bung lên. Default đã sẵn sàng: tên = timestamp, nhóm = "vừa chơi" với 1-tap "Dùng lại".</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Best case (90%)</strong>: tap "Dùng lại" → tap "Bắt đầu" = 2 taps.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Thêm người mới: ô input có autosuggest từ history (distinct names, sort by frequency).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Tên session có thể sửa <em>sau</em> khi bắt đầu — không cản đường.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Bắt đầu = nếu có session active cũ → tự archive trong background.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- STEP 3: SessionView R1 -->
+  <section id="step-3" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 3</div>
+      <h2 class="mt-2 text-3xl font-bold">Bảng điểm chính (Layout R1)</h2>
+      <p class="mt-4 text-slate-600">Đây là màn xuất hiện ngay khi mở app trong lúc đang chơi. 0 tap thấy điểm.</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>TỔNG</strong> = chip ngang, scroll horizontally khi nhiều người. Mỗi chip = tên + tổng dồn (xanh thắng / đỏ thua).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Ván cards</strong> = scroll dọc, mới-trên-cùng. Mỗi card hiện ai bao nhiêu inline.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Tap card</strong> = sửa ván. <strong>Swipe trái</strong> = xóa (confirm).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>FAB "+ Ván"</strong> sticky bottom. Trigger full-screen entry sheet (step 4).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Share button</strong> trên header → AirDrop (step 9).</span></li>
+      </ul>
+    </div>
+    <div class="flex justify-center">
+      <div class="phone">
+        <div class="phone-content flex flex-col">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <!-- NavBar -->
+          <div class="flex justify-between items-center px-5 py-3 bg-white border-b border-slate-200">
+            <button class="ios-blue text-2xl leading-none">‹</button>
+            <div class="text-center">
+              <div class="font-semibold text-sm">Tối 24/05</div>
+              <div class="text-xs text-slate-400">4 người · 3 ván</div>
+            </div>
+            <div class="flex gap-2">
+              <button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm">⤴</button>
+              <button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm">⋯</button>
+            </div>
+          </div>
+          <!-- Totals chip row -->
+          <div class="px-4 py-3 bg-white border-b border-slate-200">
+            <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Tổng</div>
+            <div class="flex gap-2 overflow-x-auto scroll-x">
+              <div class="flex-shrink-0 px-3 py-2 rounded-xl bg-red-50 border border-red-100">
+                <div class="text-xs text-slate-600">An</div>
+                <div class="font-bold ios-red">-5</div>
+              </div>
+              <div class="flex-shrink-0 px-3 py-2 rounded-xl bg-red-50 border border-red-100">
+                <div class="text-xs text-slate-600">Bình</div>
+                <div class="font-bold ios-red">-3</div>
+              </div>
+              <div class="flex-shrink-0 px-3 py-2 rounded-xl bg-green-50 border border-green-100">
+                <div class="text-xs text-slate-600">Cường</div>
+                <div class="font-bold ios-green">+5</div>
+              </div>
+              <div class="flex-shrink-0 px-3 py-2 rounded-xl bg-green-50 border border-green-100">
+                <div class="text-xs text-slate-600">Dũng</div>
+                <div class="font-bold ios-green">+3</div>
+              </div>
+            </div>
+          </div>
+          <!-- Round cards -->
+          <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+              <div class="flex justify-between items-center mb-2">
+                <div class="text-xs font-semibold text-slate-500">Ván 3</div>
+                <div class="text-xs text-slate-400">19:48</div>
+              </div>
+              <div class="flex flex-wrap gap-3 text-sm">
+                <span><span class="text-slate-500">An</span> <span class="font-semibold ios-red">-2</span></span>
+                <span><span class="text-slate-500">Bình</span> <span class="font-semibold ios-green">+4</span></span>
+                <span><span class="text-slate-500">Cường</span> <span class="font-semibold ios-green">+1</span></span>
+                <span><span class="text-slate-500">Dũng</span> <span class="font-semibold ios-red">-3</span></span>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+              <div class="flex justify-between items-center mb-2">
+                <div class="text-xs font-semibold text-slate-500">Ván 2</div>
+                <div class="text-xs text-slate-400">19:42</div>
+              </div>
+              <div class="flex flex-wrap gap-3 text-sm">
+                <span><span class="text-slate-500">An</span> <span class="font-semibold ios-green">+1</span></span>
+                <span><span class="text-slate-500">Bình</span> <span class="font-semibold ios-red">-2</span></span>
+                <span><span class="text-slate-500">Cường</span> <span class="font-semibold ios-green">+3</span></span>
+                <span><span class="text-slate-500">Dũng</span> <span class="font-semibold ios-red">-2</span></span>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+              <div class="flex justify-between items-center mb-2">
+                <div class="text-xs font-semibold text-slate-500">Ván 1</div>
+                <div class="text-xs text-slate-400">19:35</div>
+              </div>
+              <div class="flex flex-wrap gap-3 text-sm">
+                <span><span class="text-slate-500">An</span> <span class="font-semibold ios-red">-4</span></span>
+                <span><span class="text-slate-500">Bình</span> <span class="font-semibold ios-red">-5</span></span>
+                <span><span class="text-slate-500">Cường</span> <span class="font-semibold ios-green">+1</span></span>
+                <span><span class="text-slate-500">Dũng</span> <span class="font-semibold ios-green">+8</span></span>
+              </div>
+            </div>
+            <div class="h-20"></div>
+          </div>
+          <!-- FAB -->
+          <div class="absolute bottom-8 left-0 right-0 px-5">
+            <button class="w-full bg-ios-blue text-white font-semibold py-4 rounded-2xl text-base shadow-xl">
+              + Ván 4
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4: RoundEntryView normal -->
+  <section id="step-4" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center bg-white rounded-3xl shadow-sm">
+    <div class="flex justify-center order-2 md:order-1">
+      <div class="phone">
+        <div class="phone-content flex flex-col bg-white">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <!-- Sheet header -->
+          <div class="flex justify-between items-center px-5 py-3 border-b border-slate-200">
+            <button class="text-slate-500">✕</button>
+            <div class="font-semibold">Ván 4</div>
+            <div class="w-6"></div>
+          </div>
+          <!-- Players list -->
+          <div class="px-5 py-4 space-y-3">
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">An</div>
+              <div class="font-mono text-xl ios-red font-semibold">-5</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">Bình</div>
+              <div class="font-mono text-xl ios-green font-semibold">+3</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">Cường</div>
+              <div class="font-mono text-xl ios-green font-semibold">+1</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b-2 border-blue-300 bg-blue-50 -mx-2 px-2 rounded-lg">
+              <div class="font-medium">Dũng <span class="text-xs text-slate-400">đang focus</span></div>
+              <div class="font-mono text-xl text-slate-400 italic font-semibold">+1 <span class="text-xs not-italic">auto</span></div>
+            </div>
+          </div>
+          <!-- Sum indicator -->
+          <div class="mx-5 mb-3 px-4 py-2 bg-green-50 rounded-lg flex items-center justify-between">
+            <div class="text-xs text-slate-600">Tổng các ô</div>
+            <div class="font-semibold ios-green text-sm">0 ✓</div>
+          </div>
+          <!-- Keypad -->
+          <div class="mt-auto bg-slate-200 p-2 grid grid-cols-3 gap-1.5">
+            <button class="bg-white rounded-lg py-3 font-medium">1</button>
+            <button class="bg-white rounded-lg py-3 font-medium">2</button>
+            <button class="bg-white rounded-lg py-3 font-medium">3</button>
+            <button class="bg-white rounded-lg py-3 font-medium">4</button>
+            <button class="bg-white rounded-lg py-3 font-medium">5</button>
+            <button class="bg-white rounded-lg py-3 font-medium">6</button>
+            <button class="bg-white rounded-lg py-3 font-medium">7</button>
+            <button class="bg-white rounded-lg py-3 font-medium">8</button>
+            <button class="bg-white rounded-lg py-3 font-medium">9</button>
+            <button class="bg-white rounded-lg py-3 font-medium">±</button>
+            <button class="bg-white rounded-lg py-3 font-medium">0</button>
+            <button class="bg-white rounded-lg py-3 font-medium">⌫</button>
+          </div>
+          <div class="p-3 bg-slate-200">
+            <button class="w-full bg-ios-blue text-white font-semibold py-3 rounded-xl">Lưu ván →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="order-1 md:order-2">
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 4</div>
+      <h2 class="mt-2 text-3xl font-bold">Thêm ván — normal (cả bàn liên quan)</h2>
+      <p class="mt-4 text-slate-600">Full-screen sheet. List dọc của player, ô số bên phải. Custom keypad dưới đáy — không che gì, không cần system keyboard.</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Auto-fill rule</strong>: gõ N-1 ô → ô cuối hiện suggested value <span class="text-slate-400 italic">+1 auto</span> mờ italic.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Tap ô auto-fill → trở thành ô gõ tay, ô khác sẽ thành auto.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Sum indicator</strong> live: xanh = 0 OK, cam = ≠0 warning.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Keypad có ±, ⌫. Tap số → thêm vào ô đang focus.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- STEP 5: Sparse round -->
+  <section id="step-5" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 5</div>
+      <h2 class="mt-2 text-3xl font-bold">Thêm ván — chặt heo (sparse)</h2>
+      <p class="mt-4 text-slate-600">Case đặc thù Phỏm/Sâm: chỉ 2 người dính giao dịch (vd Bình chặt heo An), những người khác không liên quan.</p>
+      <div class="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100 text-sm">
+        <div class="font-semibold mb-1">Rule α: Empty = 0 ngầm</div>
+        <div class="text-slate-700">Ô bạn không tap = 0 mặc định (placeholder mờ). Auto-fill chỉ kích hoạt khi N-1 ô đã có số. Nếu sum 2 ô đã gõ = 0 → tap Lưu trực tiếp, không cần đụng 2 ô còn lại.</div>
+      </div>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Chặt heo 4 người</strong>: 2 thao tác gõ + 1 tap Lưu = 3 actions tổng.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Chặt heo 8 người</strong>: vẫn 3 actions (placeholder 0 cho 6 người còn lại, không cần đụng).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Sum indicator <span class="ios-green font-semibold">0 ✓</span> tự động báo sẵn sàng.</span></li>
+        <li class="flex gap-2"><span class="ios-orange">●</span><span>Nếu sum ≠ 0 (lỡ tay) → warning cam, vẫn cho Lưu.</span></li>
+      </ul>
+    </div>
+    <div class="flex justify-center">
+      <div class="phone">
+        <div class="phone-content flex flex-col bg-white">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <div class="flex justify-between items-center px-5 py-3 border-b border-slate-200">
+            <button class="text-slate-500">✕</button>
+            <div class="font-semibold">Ván 5 · Chặt heo</div>
+            <div class="w-6"></div>
+          </div>
+          <div class="px-5 py-4 space-y-3">
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">An</div>
+              <div class="font-mono text-xl ios-red font-semibold">-5</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">Bình</div>
+              <div class="font-mono text-xl ios-green font-semibold">+5</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium text-slate-400">Cường</div>
+              <div class="font-mono text-xl text-slate-300 font-light">0</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium text-slate-400">Dũng</div>
+              <div class="font-mono text-xl text-slate-300 font-light">0</div>
+            </div>
+          </div>
+          <div class="mx-5 mb-3 px-4 py-3 bg-green-50 rounded-lg flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-600">Tổng các ô</div>
+              <div class="text-xs text-slate-400 mt-0.5">2 người liên quan, 2 người = 0</div>
+            </div>
+            <div class="font-semibold ios-green text-lg">0 ✓</div>
+          </div>
+          <div class="mt-auto bg-slate-200 p-2 grid grid-cols-3 gap-1.5">
+            <button class="bg-white rounded-lg py-3 font-medium">1</button>
+            <button class="bg-white rounded-lg py-3 font-medium">2</button>
+            <button class="bg-white rounded-lg py-3 font-medium">3</button>
+            <button class="bg-white rounded-lg py-3 font-medium">4</button>
+            <button class="bg-white rounded-lg py-3 font-medium">5</button>
+            <button class="bg-white rounded-lg py-3 font-medium">6</button>
+            <button class="bg-white rounded-lg py-3 font-medium">7</button>
+            <button class="bg-white rounded-lg py-3 font-medium">8</button>
+            <button class="bg-white rounded-lg py-3 font-medium">9</button>
+            <button class="bg-white rounded-lg py-3 font-medium">±</button>
+            <button class="bg-white rounded-lg py-3 font-medium">0</button>
+            <button class="bg-white rounded-lg py-3 font-medium">⌫</button>
+          </div>
+          <div class="p-3 bg-slate-200">
+            <button class="w-full bg-ios-blue text-white font-semibold py-3 rounded-xl">Lưu ván →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 6: Edit -->
+  <section id="step-6" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center bg-white rounded-3xl shadow-sm">
+    <div class="flex justify-center order-2 md:order-1">
+      <div class="phone">
+        <div class="phone-content flex flex-col bg-white">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <div class="flex justify-between items-center px-5 py-3 border-b border-slate-200">
+            <button class="text-slate-500">✕</button>
+            <div class="font-semibold">Sửa ván 2</div>
+            <button class="text-sm ios-red font-medium">Xóa</button>
+          </div>
+          <div class="px-5 py-4 space-y-3">
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">An</div>
+              <div class="font-mono text-xl ios-green font-semibold">+1</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b-2 border-blue-300 bg-blue-50 -mx-2 px-2 rounded-lg">
+              <div class="font-medium">Bình <span class="text-xs text-slate-400">focus</span></div>
+              <div class="font-mono text-xl ios-red font-semibold">-2|</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">Cường</div>
+              <div class="font-mono text-xl ios-green font-semibold">+3</div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-slate-100">
+              <div class="font-medium">Dũng</div>
+              <div class="font-mono text-xl text-slate-400 italic font-semibold">-2 <span class="text-xs not-italic">auto</span></div>
+            </div>
+          </div>
+          <div class="mx-5 mb-3 px-4 py-2 bg-green-50 rounded-lg flex items-center justify-between">
+            <div class="text-xs text-slate-600">Tổng các ô</div>
+            <div class="font-semibold ios-green text-sm">0 ✓</div>
+          </div>
+          <div class="mt-auto bg-slate-200 p-2 grid grid-cols-3 gap-1.5">
+            <button class="bg-white rounded-lg py-3 font-medium">1</button>
+            <button class="bg-white rounded-lg py-3 font-medium">2</button>
+            <button class="bg-white rounded-lg py-3 font-medium">3</button>
+            <button class="bg-white rounded-lg py-3 font-medium">4</button>
+            <button class="bg-white rounded-lg py-3 font-medium">5</button>
+            <button class="bg-white rounded-lg py-3 font-medium">6</button>
+            <button class="bg-white rounded-lg py-3 font-medium">7</button>
+            <button class="bg-white rounded-lg py-3 font-medium">8</button>
+            <button class="bg-white rounded-lg py-3 font-medium">9</button>
+            <button class="bg-white rounded-lg py-3 font-medium">±</button>
+            <button class="bg-white rounded-lg py-3 font-medium">0</button>
+            <button class="bg-white rounded-lg py-3 font-medium">⌫</button>
+          </div>
+          <div class="p-3 bg-slate-200">
+            <button class="w-full bg-ios-blue text-white font-semibold py-3 rounded-xl">Lưu thay đổi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="order-1 md:order-2">
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 6</div>
+      <h2 class="mt-2 text-3xl font-bold">Sửa ván cũ</h2>
+      <p class="mt-4 text-slate-600">Tap row ván X trong bảng điểm → cùng entry sheet, pre-fill số cũ. Sửa 1 ô → ô auto-fill ván đó tự cập nhật → tổng leaderboard reactive.</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Cùng UX entry sheet — không học cái mới.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Thêm nút <span class="ios-red font-medium">Xóa</span> ở header (double-confirm).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Không undo stack — sửa direct, tin user.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Alternative: swipe trái trên row → "Xóa" button hiện ra (iOS pattern).</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- STEP 7: Summary -->
+  <section id="step-7" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 7</div>
+      <h2 class="mt-2 text-3xl font-bold">Tổng kết cuối buổi</h2>
+      <p class="mt-4 text-slate-600">Trigger: tap <strong>⋯ → Kết thúc</strong> hoặc tạo session mới khi đang có active. Sau khi tổng kết → session archive, vẫn xem lại từ History.</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Ranking</strong> 🥇🥈🥉💀 sorted bởi tổng.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Metadata: số ván, ngày, thời lượng (tự tính).</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Không money / settlement</strong> — pure điểm. Nhẩm tiền ngoài app.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Share button cuối → URL handoff (step 9).</span></li>
+      </ul>
+    </div>
+    <div class="flex justify-center">
+      <div class="phone">
+        <div class="phone-content flex flex-col">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <div class="flex justify-between items-center px-5 py-3 bg-white border-b border-slate-200">
+            <button class="text-slate-500">✕</button>
+            <div class="font-semibold">Tổng kết</div>
+            <div class="w-6"></div>
+          </div>
+          <div class="px-5 py-6 text-center bg-white border-b border-slate-200">
+            <div class="text-3xl mb-2">🏆</div>
+            <div class="text-lg font-bold">Tối 24/05/2026</div>
+            <div class="text-sm text-slate-500 mt-1">19 ván · 4 người · 2h 14p</div>
+          </div>
+          <div class="p-4 space-y-2">
+            <div class="bg-white rounded-2xl p-4 flex items-center justify-between border-2 border-yellow-200">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">🥇</div>
+                <div>
+                  <div class="font-semibold">Cường</div>
+                  <div class="text-xs text-slate-500">7 ván thắng</div>
+                </div>
+              </div>
+              <div class="font-mono text-2xl font-bold ios-green">+12</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">🥈</div>
+                <div>
+                  <div class="font-semibold">Dũng</div>
+                  <div class="text-xs text-slate-500">5 ván thắng</div>
+                </div>
+              </div>
+              <div class="font-mono text-2xl font-bold ios-green">+8</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl w-8 text-center text-slate-400">3</div>
+                <div>
+                  <div class="font-semibold">Bình</div>
+                  <div class="text-xs text-slate-500">4 ván thắng</div>
+                </div>
+              </div>
+              <div class="font-mono text-2xl font-bold ios-red">-7</div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 flex items-center justify-between border-2 border-red-200">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">💀</div>
+                <div>
+                  <div class="font-semibold">An</div>
+                  <div class="text-xs text-slate-500">3 ván thắng</div>
+                </div>
+              </div>
+              <div class="font-mono text-2xl font-bold ios-red">-13</div>
+            </div>
+          </div>
+          <div class="p-4 mt-auto bg-white border-t border-slate-200">
+            <button class="w-full bg-ios-blue text-white font-semibold py-3 rounded-xl mb-2">⤴ Chia sẻ session</button>
+            <button class="w-full text-slate-600 font-medium py-3 rounded-xl">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 8: History -->
+  <section id="step-8" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center bg-white rounded-3xl shadow-sm">
+    <div class="flex justify-center order-2 md:order-1">
+      <div class="phone">
+        <div class="phone-content flex flex-col">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <div class="flex justify-between items-center px-5 py-3 bg-white border-b border-slate-200">
+            <button class="ios-blue text-2xl leading-none">‹</button>
+            <div class="font-semibold">Lịch sử</div>
+            <div class="w-6"></div>
+          </div>
+          <div class="p-4 space-y-2">
+            <!-- Session row -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <div class="font-semibold">Tối 24/05/2026</div>
+                <div class="text-xs text-slate-400">Hôm qua</div>
+              </div>
+              <div class="text-sm text-slate-500 mb-2">An · Bình · Cường · Dũng</div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="px-2 py-1 bg-slate-100 rounded">19 ván</span>
+                <span class="ios-green font-semibold">🥇 Cường +12</span>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <div class="font-semibold">Cuối tuần ở quê</div>
+                <div class="text-xs text-slate-400">3 ngày trước</div>
+              </div>
+              <div class="text-sm text-slate-500 mb-2">An · Bình · Em · Phong</div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="px-2 py-1 bg-slate-100 rounded">12 ván</span>
+                <span class="ios-green font-semibold">🥇 Em +9</span>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <div class="font-semibold">Tối 22/05/2026</div>
+                <div class="text-xs text-slate-400">5 ngày trước</div>
+              </div>
+              <div class="text-sm text-slate-500 mb-2">An · Bình · Cường · Dũng</div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="px-2 py-1 bg-slate-100 rounded">15 ván</span>
+                <span class="ios-green font-semibold">🥇 An +6</span>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <div class="font-semibold">Phỏm tối Chủ Nhật</div>
+                <div class="text-xs text-slate-400">1 tuần trước</div>
+              </div>
+              <div class="text-sm text-slate-500 mb-2">An · Bình · Cường</div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="px-2 py-1 bg-slate-100 rounded">21 ván</span>
+                <span class="ios-green font-semibold">🥇 Bình +14</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="order-1 md:order-2">
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 8</div>
+      <h2 class="mt-2 text-3xl font-bold">Lịch sử các session</h2>
+      <p class="mt-4 text-slate-600">Truy cập từ icon góc phải HomeView. List sorted newest first. Tap row → mở lại màn Tổng kết (read-only).</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Mỗi row: tên + thời gian relative + chip player + ranking compact.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>Long-press</strong> = menu Xóa.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Filter/search defer post-MVP. ~50-100 sessions sẽ scroll thoải mái.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Imported session (từ URL) cũng vào đây như session bình thường.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- STEP 9: Share -->
+  <section id="step-9" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 9</div>
+      <h2 class="mt-2 text-3xl font-bold">Share session qua AirDrop</h2>
+      <p class="mt-4 text-slate-600">Tap nút <strong>⤴ Share</strong> → SwiftUI <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">ShareLink</code> bung share sheet hệ thống. AirDrop xuất hiện sẵn.</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>URL format: <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">phorm://import?s=&lt;base64&gt;</code></span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Encoding: JSON → gzip → base64-url-safe. Typical session 20 ván 4 người ≈ 800-1500 bytes URL.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Cùng share sheet: AirDrop, iMessage, Zalo, Copy Link.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Không cần backend, không cần signup phía bạn bè.</span></li>
+      </ul>
+    </div>
+    <div class="flex justify-center">
+      <div class="phone">
+        <div class="phone-content flex flex-col bg-slate-300/50">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <!-- Dimmed background showing session view -->
+          <div class="px-4 py-2 bg-white border-b border-slate-200 opacity-30">
+            <div class="text-xs text-slate-500">Tối 24/05/2026 · 4 người · 19 ván</div>
+          </div>
+          <div class="flex-1"></div>
+          <!-- Share sheet -->
+          <div class="bg-white rounded-t-3xl shadow-2xl p-5 space-y-4">
+            <div class="w-12 h-1 bg-slate-300 rounded-full mx-auto"></div>
+            <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+              <div class="w-12 h-12 rounded-xl bg-ios-blue flex items-center justify-center text-white text-xl">🎴</div>
+              <div class="flex-1">
+                <div class="font-semibold text-sm">Tối 24/05/2026</div>
+                <div class="text-xs text-slate-500 break-all">phorm://import?s=H4sI...</div>
+              </div>
+            </div>
+            <!-- AirDrop row -->
+            <div>
+              <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">AirDrop</div>
+              <div class="flex gap-3 overflow-x-auto">
+                <div class="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                  <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-2xl">📱</div>
+                  <div class="text-[10px] text-center leading-tight">iPhone Bình</div>
+                </div>
+                <div class="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                  <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-2xl">📱</div>
+                  <div class="text-[10px] text-center leading-tight">iPad Cường</div>
+                </div>
+                <div class="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                  <div class="w-14 h-14 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-2xl">📱</div>
+                  <div class="text-[10px] text-center leading-tight">iPhone Dũng</div>
+                </div>
+              </div>
+            </div>
+            <!-- Apps row -->
+            <div>
+              <div class="flex gap-3 overflow-x-auto pt-2 border-t border-slate-200">
+                <div class="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                  <div class="w-14 h-14 rounded-2xl bg-green-500 flex items-center justify-center text-white text-2xl">💬</div>
+                  <div class="text-[10px]">Messages</div>
+                </div>
+                <div class="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                  <div class="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center text-white text-2xl">Z</div>
+                  <div class="text-[10px]">Zalo</div>
+                </div>
+                <div class="flex-shrink-0 flex flex-col items-center gap-1 w-16">
+                  <div class="w-14 h-14 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-600 text-2xl">📋</div>
+                  <div class="text-[10px]">Copy</div>
+                </div>
+              </div>
+            </div>
+            <button class="w-full text-slate-600 font-semibold py-3 rounded-xl bg-slate-100">Hủy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 10: Receive URL -->
+  <section id="step-10" class="step-anchor max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 items-center bg-white rounded-3xl shadow-sm">
+    <div class="flex justify-center order-2 md:order-1">
+      <div class="phone">
+        <div class="phone-content flex flex-col bg-white">
+          <div class="flex justify-between items-center px-6 pt-2 pb-2 text-xs font-semibold text-slate-900">
+            <span>9:41</span><span>•••</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center justify-center px-6 text-center">
+            <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-4xl mb-6">📥</div>
+            <div class="text-xl font-bold mb-1">Nhận session</div>
+            <div class="text-sm text-slate-500 mb-8">Ai đó gửi cho bạn 1 session qua AirDrop</div>
+
+            <div class="w-full bg-slate-50 rounded-2xl p-5 mb-8 border border-slate-200">
+              <div class="font-semibold mb-2">Tối 24/05/2026</div>
+              <div class="text-sm text-slate-500 mb-3">An · Bình · Cường · Dũng</div>
+              <div class="flex gap-2 text-xs">
+                <span class="px-2 py-1 bg-white rounded border border-slate-200">4 người</span>
+                <span class="px-2 py-1 bg-white rounded border border-slate-200">19 ván</span>
+                <span class="px-2 py-1 bg-white rounded border border-slate-200">2h 14p</span>
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-400 mb-6 px-4">
+              Session đang chơi của bạn sẽ tự lưu vào History trước khi mở session này.
+            </div>
+          </div>
+          <div class="p-4 space-y-2 border-t border-slate-200">
+            <button class="w-full bg-ios-blue text-white font-semibold py-3.5 rounded-xl">Mở session này</button>
+            <button class="w-full text-slate-600 font-medium py-3 rounded-xl">Hủy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="order-1 md:order-2">
+      <div class="text-sm font-semibold ios-blue uppercase tracking-wider">Step 10</div>
+      <h2 class="mt-2 text-3xl font-bold">Nhận session qua link</h2>
+      <p class="mt-4 text-slate-600">Click link <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">phorm://...</code> → app trigger <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded">.onOpenURL</code> → modal confirm hiển thị preview trước khi import.</p>
+      <ul class="mt-6 space-y-3 text-sm">
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Preview: tên, players, số ván, thời lượng — để bạn biết là session gì.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span><strong>"Mở"</strong> = save vào SwiftData + archive session active cũ + activate cái mới.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Confirmation chống click nhầm link cũ trong chat → bay session đang chơi.</span></li>
+        <li class="flex gap-2"><span class="ios-blue">●</span><span>Imported session vào History như session bình thường — có thể sửa, share lại, v.v.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Footer summary -->
+  <footer class="max-w-5xl mx-auto px-6 py-16">
+    <div class="bg-slate-900 text-white rounded-3xl p-10">
+      <h2 class="text-2xl font-bold mb-4">Tóm tắt</h2>
+      <div class="grid md:grid-cols-3 gap-6 text-sm">
+        <div>
+          <div class="font-semibold text-blue-300 mb-2">Tech</div>
+          <ul class="space-y-1 text-slate-300">
+            <li>• SwiftUI · iOS 17+</li>
+            <li>• SwiftData + CloudKit</li>
+            <li>• ShareLink + onOpenURL</li>
+            <li>• Repo riêng `phorm-ios`</li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-semibold text-blue-300 mb-2">UX</div>
+          <ul class="space-y-1 text-slate-300">
+            <li>• Dumb tracker (không hiểu luật)</li>
+            <li>• Auto-fill ô cuối zero-sum</li>
+            <li>• Empty = 0 ngầm cho sparse</li>
+            <li>• Custom keypad in-app</li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-semibold text-blue-300 mb-2">Out of scope</div>
+          <ul class="space-y-1 text-slate-300">
+            <li>• Money / settlement</li>
+            <li>• Smart scorer (móm/ù)</li>
+            <li>• Multi-user collab</li>
+            <li>• Stats lifetime</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-8 pt-6 border-t border-slate-700 text-xs text-slate-400">
+        Plan file: <code class="bg-slate-800 px-2 py-1 rounded">/root/.claude/plans/lu-t-ch-i-v-c-ch-streamed-waffle.md</code>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
